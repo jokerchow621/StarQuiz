@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>StarQuiz 星格</title>
+    <meta name="description" content="在彩色棋盤上找出每一區唯一的星星。同行、同列、周圍八格都不能再有星星。" />
+    <meta name="theme-color" content="#1c1914" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="星格" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="icon" href="icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <link rel="stylesheet" href="styles.css?v=21" />
+  </head>
+  <body>
+    <div class="app">
+      <section class="screen" id="lobby" data-visible="true">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 72 72">
+              <path d="M36 8l6.8 17.4L62 27.2 48 39l3.8 18.8L36 47.6 20.2 57.8 24 39 10 27.2l19.2-1.8z" />
+            </svg>
+          </div>
+          <p class="eyebrow">StarQuiz</p>
+          <h1>星格</h1>
+          <p class="tagline">每個色塊一顆星，行列與鄰格互不侵犯。</p>
+        </div>
+
+        <div class="campaign-panel">
+          <div class="progress-block">
+            <p class="progress-kicker">征途進度</p>
+            <p class="progress-count" id="progress-count">0 / 999</p>
+            <div class="progress-bar" aria-hidden="true"><span id="progress-fill"></span></div>
+            <p class="continue-hint" id="continue-hint">從第 1 關開始，格數會由少到多。</p>
+          </div>
+          <button class="solid-btn continue-btn" id="continue-btn" type="button">繼續第 1 關</button>
+          <button class="ghost-btn" id="open-levels" type="button">關卡一覽</button>
+          <button class="text-btn" id="open-rules" type="button">遊戲規則</button>
+        </div>
+      </section>
+
+      <section class="screen" id="play" data-visible="false">
+        <header class="play-bar">
+          <button class="icon-btn" id="back-lobby" type="button" aria-label="返回選單">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="play-meta">
+            <p class="play-difficulty" id="play-difficulty">普通</p>
+            <p class="play-timer" id="play-timer">00:00</p>
+          </div>
+          <span class="play-spacer" aria-hidden="true"></span>
+        </header>
+
+        <div class="play-board">
+          <div class="board-stage">
+            <div class="board-loading" id="board-loading" hidden>正在鋪陳星圖…</div>
+            <div class="board" id="board" role="grid"></div>
+          </div>
+          <div class="play-score-wrap" id="play-score-wrap" aria-label="難度指數">
+            <div class="play-score-bar" aria-hidden="true"><span id="play-score-fill"></span></div>
+            <p class="play-score" id="play-score">0</p>
+            <p class="play-score-caption">難度<br />指數</p>
+          </div>
+        </div>
+
+        <footer class="toolbar">
+          <div class="reason-row">
+            <label class="reason-switch">
+              <input type="checkbox" id="reason-toggle" />
+              <span class="reason-ui" aria-hidden="true"></span>
+              <span class="reason-text">推理模式</span>
+            </label>
+            <button class="reason-clear" id="clear-reason" type="button">清除推理</button>
+          </div>
+          <p class="hint" id="control-hint">左鍵放星星 · 右鍵拖曳連續打叉</p>
+          <div class="toolbar-actions">
+            <button class="ghost-btn" id="restart-same" type="button">重來</button>
+            <button class="ghost-btn" id="play-rules" type="button">規則</button>
+          </div>
+        </footer>
+      </section>
+    </div>
+
+    <div class="overlay" id="rules-overlay" hidden>
+      <div class="dialog" role="dialog" aria-labelledby="rules-title" aria-modal="true">
+        <h2 id="rules-title">規則</h2>
+        <ol class="rules-list">
+          <li>棋盤由連續色塊組成，<strong>每個顏色區域恰好一顆星星</strong>。</li>
+          <li>星星的<strong>周圍八格</strong>不能再有星星。</li>
+          <li>星星所在的<strong>直列與橫列</strong>不能再有其他星星。</li>
+        </ol>
+        <p class="rules-note">全關卡共 999 關。前 5 關是 4×4 熱身，之後從 5×5 一路加到 9×9。過關進度存在這台裝置，重開可從上一關繼續。左鍵標記星星，標錯即失敗、這一關從頭再來。右鍵按住拖曳可連續打叉。開啟推理模式時，左鍵標問號星星、右鍵標問號叉叉，不計入答案；再點一次可消除。關閉推理模式後，問號會落實到答案盤。</p>
+        <button class="solid-btn" id="close-rules" type="button">知道了</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="levels-overlay" hidden>
+      <div class="dialog levels-dialog" role="dialog" aria-labelledby="levels-title" aria-modal="true">
+        <h2 id="levels-title">關卡一覽</h2>
+        <div class="chapter-tabs" id="chapter-tabs"></div>
+        <div class="level-grid" id="level-grid"></div>
+        <div class="level-pager">
+          <button class="ghost-btn" id="level-prev" type="button">上一頁</button>
+          <span id="level-page">1–50</span>
+          <button class="ghost-btn" id="level-next" type="button">下一頁</button>
+        </div>
+        <button class="solid-btn" id="close-levels" type="button">關閉</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="result-overlay" hidden>
+      <div class="dialog result-dialog" role="dialog" aria-labelledby="result-title" aria-modal="true">
+        <p class="result-kicker" id="result-kicker">挑戰成功</p>
+        <h2 id="result-title">星圖齊了</h2>
+        <p class="result-copy" id="result-copy"></p>
+        <div class="result-actions">
+          <button class="solid-btn" id="result-next" type="button">下一關</button>
+          <button class="ghost-btn" id="result-home" type="button">返回選單</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="puzzle.js?v=23"></script>
+    <script src="game.js?v=25"></script>
+  </body>
+</html>
