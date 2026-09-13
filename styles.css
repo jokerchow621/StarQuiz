@@ -429,7 +429,9 @@ button {
   width: 100%;
   margin: 0 auto;
   user-select: none;
-  touch-action: manipulation;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
   background: #b9a888;
 }
 
@@ -442,6 +444,9 @@ button {
   padding: 0;
   appearance: none;
   cursor: pointer;
+  touch-action: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .cell.edge-t { border-top-width: 3px; border-top-color: var(--ink); }

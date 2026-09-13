@@ -66,6 +66,8 @@
     baseElapsed: 0,
     timerId: null,
     coarsePointer: false,
+    lastTouchTap: null,
+    ignoreClickUntil: 0,
     crossPaint: null,
     save: null,
     catalogChapter: 0,
@@ -319,12 +321,12 @@
   function refreshHintText() {
     if (state.reasonMode) {
       els.hint.textContent = state.coarsePointer
-        ? "推理中：點選標問號 · 不計入答案"
+        ? "推理中：單擊問號叉叉可滑動 · 雙擊問號星星"
         : "推理中：左鍵問號星星 · 右鍵問號叉叉";
       return;
     }
     els.hint.textContent = state.coarsePointer
-      ? "點選放星星 · 長按標叉叉"
+      ? "單擊打叉可滑動 · 雙擊放星星"
       : "左鍵放星星 · 右鍵拖曳連續打叉";
   }
 
@@ -384,47 +386,10 @@
 
         btn.addEventListener("click", onCellClick);
         btn.addEventListener("contextmenu", onCellContext);
-        btn.addEventListener("pointerdown", onCellPointerDown);
-        bindLongPress(btn);
+        btn.addEventListener("pointerdown", onCellPointerDown, { passive: false });
         els.board.appendChild(btn);
       }
     }
-  }
-
-  function bindLongPress(btn) {
-    var timer = null;
-    var fired = false;
-
-    btn.addEventListener("pointerdown", function (e) {
-      if (e.pointerType === "mouse" || state.reasonMode) return;
-      fired = false;
-      timer = setTimeout(function () {
-        fired = true;
-        if (state.reasonMode) toggleHint(Number(btn.dataset.r), Number(btn.dataset.c), HINT_CROSS);
-        else toggleCross(Number(btn.dataset.r), Number(btn.dataset.c));
-      }, 420);
-    });
-
-    function clear() {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    }
-
-    btn.addEventListener("pointerup", clear);
-    btn.addEventListener("pointerleave", clear);
-    btn.addEventListener("pointercancel", clear);
-    btn.addEventListener(
-      "click",
-      function (e) {
-        if (!fired) return;
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        fired = false;
-      },
-      true
-    );
   }
 
   function flashWrong(r, c) {
@@ -561,9 +526,38 @@
     state.crossPaint = null;
   }
 
+  function isTouchPointer(e) {
+    return e.pointerType === "touch" || e.pointerType === "pen";
+  }
+
+  function onTouchStar(r, c) {
+    if (state.marks[r][c] === CROSS || state.marks[r][c] === HINT_CROSS) {
+      setMark(r, c, EMPTY);
+    }
+    if (state.reasonMode) toggleHint(r, c, HINT_STAR);
+    else tryPlaceStar(r, c);
+  }
+
   function onCellPointerDown(e) {
     var r = Number(e.currentTarget.dataset.r);
     var c = Number(e.currentTarget.dataset.c);
+    if (isTouchPointer(e)) {
+      state.coarsePointer = true;
+      state.ignoreClickUntil = Date.now() + 700;
+      refreshHintText();
+      e.preventDefault();
+      var now = Date.now();
+      var last = state.lastTouchTap;
+      if (last && last.r === r && last.c === c && !last.moved && now - last.at <= 400) {
+        state.lastTouchTap = null;
+        endCrossPaint();
+        onTouchStar(r, c);
+        return;
+      }
+      state.lastTouchTap = { r: r, c: c, at: now, moved: false };
+      startCrossPaint(r, c);
+      return;
+    }
     var right = e.button === 2;
     var left = e.button === 0;
     var crossMode = state.mode === "cross" && left;
@@ -579,6 +573,7 @@
   }
 
   function onCellClick(e) {
+    if (Date.now() < state.ignoreClickUntil) return;
     if (state.reasonMode) return;
     if (state.mode === "cross") return;
     tryPlaceStar(Number(e.currentTarget.dataset.r), Number(e.currentTarget.dataset.c));
@@ -884,6 +879,14 @@
   window.addEventListener("pointerdown", updatePointerMode, { once: true });
   document.addEventListener("pointermove", function (e) {
     if (!state.crossPaint) return;
+    var last = state.lastTouchTap;
+    if (last) {
+      var el = document.elementFromPoint(e.clientX, e.clientY);
+      var cell = el && el.closest ? el.closest(".cell") : null;
+      if (cell && els.board.contains(cell)) {
+        if (Number(cell.dataset.r) !== last.r || Number(cell.dataset.c) !== last.c) last.moved = true;
+      }
+    }
     paintCrossAtPoint(e.clientX, e.clientY);
   });
   document.addEventListener("pointerup", endCrossPaint);
