@@ -373,8 +373,7 @@
 
     for (var r = 0; r < n; r++) {
       for (var c = 0; c < n; c++) {
-        var btn = document.createElement("button");
-        btn.type = "button";
+        var btn = document.createElement("div");
         btn.className = "cell " + cellBorders(regions, r, c);
         btn.style.background = cellColor(regions[r][c]);
         btn.dataset.r = String(r);
@@ -877,6 +876,26 @@
   });
 
   window.addEventListener("pointerdown", updatePointerMode, { once: true });
+  var lastTouchEndAt = 0;
+  document.addEventListener(
+    "touchend",
+    function (e) {
+      var now = Date.now();
+      if (now - lastTouchEndAt <= 400) e.preventDefault();
+      lastTouchEndAt = now;
+    },
+    { passive: false }
+  );
+  document.addEventListener(
+    "gesturestart",
+    function (e) {
+      e.preventDefault();
+    },
+    { passive: false }
+  );
+  els.board.addEventListener("dblclick", function (e) {
+    e.preventDefault();
+  });
   document.addEventListener("pointermove", function (e) {
     if (!state.crossPaint) return;
     var last = state.lastTouchTap;

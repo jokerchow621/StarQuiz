@@ -25,6 +25,7 @@ html,
 body {
   margin: 0;
   min-height: 100%;
+  touch-action: manipulation;
   background:
     radial-gradient(circle at 12% 8%, rgba(228, 184, 74, 0.12), transparent 28%),
     radial-gradient(circle at 88% 0%, rgba(180, 74, 60, 0.1), transparent 26%),
@@ -447,6 +448,7 @@ button {
   touch-action: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .cell.edge-t { border-top-width: 3px; border-top-color: var(--ink); }
