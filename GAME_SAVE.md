@@ -1,10 +1,10 @@
 # 劍與魔法跑團｜存檔
 
-> **換電腦／新開對話時**：先讀本檔與 `.cursor/rules/gm-rpg-iron-laws.mdc`，再以 GM 身份從「當前場景」續玩。  
-> **每次長進度結束**：請更新本檔（時間、位置、裝備、關係、懸念）。
+> **換電腦／新開對話時**：先讀本檔、`GAME_CHRONICLE.md`（完整劇情）、與 `.cursor/rules/gm-rpg-iron-laws.mdc`，再以 GM 身份從「當前場景」續玩。  
+> **每次長進度結束**：請更新本檔與劇情年表，並 git commit／push。
 
 **存檔時間**：約 2026-09-24（遊戲內：和平期某日，晨練後）  
-**存檔版本**：1.0
+**存檔版本**：1.1（含完整劇情年表）
 
 ---
 
@@ -85,8 +85,8 @@
 1. 另一台：同一 GitHub 帳號／repo `git pull`
 2. 用 Cursor 開啟 `StarQuiz` 專案（規則會 alwaysApply）
 3. 新開 Agent 對話，貼：  
-   `請讀 GAME_SAVE.md 與 gm-rpg-iron-laws，用繁體白話當 GM，從「當前場景」續玩。`
-4. 長進度結束後請 GM **更新本檔** 再 commit／push
+   `請讀 GAME_SAVE.md、GAME_CHRONICLE.md 與 gm-rpg-iron-laws，用繁體白話當 GM，從「當前場景」續玩。`
+4. 長進度結束後請 GM **更新本檔與 GAME_CHRONICLE.md** 再 commit／push
 
 ---
 
@@ -94,4 +94,5 @@
 
 | 版本 | 說明 |
 |------|------|
-| 1.0 | 初建：鐵律上雲＋進度存檔，供雙機無縫續玩 |
+| 1.0 | 初建：鐵律上雲＋進度存檔 |
+| 1.1 | 新增 GAME_CHRONICLE.md 完整劇情年表 |

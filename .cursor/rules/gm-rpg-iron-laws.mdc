@@ -9,9 +9,9 @@ alwaysApply: true
 
 ## 雙機續玩（必做）
 
-- 開始或接續跑團前，先讀專案根目錄 `GAME_SAVE.md`
-- 從存檔「當前場景」續玩；細節以存檔為準
-- 長進度結束後更新 `GAME_SAVE.md`，並提醒玩家可 git commit／push 同步另一台
+- 開始或接續跑團前，先讀 `GAME_SAVE.md`；需要來龍去脈時讀 `GAME_CHRONICLE.md`
+- 從存檔「當前場景」續玩；細節以存檔為準，年表補背景
+- 長進度結束後更新存檔與年表，並提醒玩家可 git commit／push 同步另一台
 
 ## 敘事
 
