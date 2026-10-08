@@ -20,6 +20,7 @@
   var HINT_STAR = 3;
   var HINT_CROSS = 4;
   var PAGE_SIZE = 50;
+  var MAX_REASON_DEPTH = 5;
 
   var els = {
     lobby: document.getElementById("lobby"),
@@ -35,6 +36,10 @@
     hint: document.getElementById("control-hint"),
     reasonToggle: document.getElementById("reason-toggle"),
     clearReason: document.getElementById("clear-reason"),
+    reasonLayers: document.getElementById("reason-layers"),
+    reasonBack: document.getElementById("reason-back"),
+    reasonNext: document.getElementById("reason-next"),
+    layerPips: document.getElementById("layer-pips"),
     boardStage: document.querySelector(".board-stage"),
     rulesOverlay: document.getElementById("rules-overlay"),
     resultOverlay: document.getElementById("result-overlay"),
@@ -57,10 +62,12 @@
     level: 1,
     puzzle: null,
     marks: [],
+    layers: [],
     lives: 1,
     status: "idle",
     mode: "star",
     reasonMode: false,
+    reasonDepth: 1,
     startedAt: 0,
     elapsed: 0,
     baseElapsed: 0,
@@ -171,9 +178,13 @@
       marks: state.marks.map(function (row) {
         return row.slice();
       }),
+      layers: state.layers.map(function (row) {
+        return row.slice();
+      }),
       lives: 1,
       elapsed: currentElapsed(),
       reasonMode: !!state.reasonMode,
+      reasonDepth: state.reasonDepth,
     };
     if (immediate) {
       if (draftTimer) {
@@ -283,46 +294,127 @@
     );
   }
 
-  function hintBadge() {
-    return '<span class="hint-q">?</span>';
+  function hintBadge(layer) {
+    return '<span class="hint-q layer-' + layer + '">' + layer + "</span>";
   }
 
-  function markHtml(mark) {
+  function markHtml(mark, layer) {
     if (mark === STAR) return starSvg();
     if (mark === CROSS) return crossSvg();
-    if (mark === HINT_STAR) return starSvg() + hintBadge();
-    if (mark === HINT_CROSS) return crossSvg() + hintBadge();
+    if (mark === HINT_STAR) return starSvg() + hintBadge(layer || 1);
+    if (mark === HINT_CROSS) return crossSvg() + hintBadge(layer || 1);
     return "";
+  }
+
+  function layerOf(r, c) {
+    return (state.layers[r] && state.layers[r][c]) || 0;
+  }
+
+  function isLockedHint(r, c) {
+    return isHintMark(state.marks[r][c]) && layerOf(r, c) !== state.reasonDepth;
+  }
+
+  function layerHasMarks(layer) {
+    var n = state.marks.length;
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (isHintMark(state.marks[r][c]) && layerOf(r, c) === layer) return true;
+      }
+    }
+    return false;
+  }
+
+  function renderLayerPips() {
+    if (!els.layerPips) return;
+    els.layerPips.innerHTML = "";
+    for (var i = 1; i <= MAX_REASON_DEPTH; i++) {
+      var pip = document.createElement("li");
+      pip.className = "layer-pip layer-" + i;
+      if (i < state.reasonDepth) pip.classList.add("is-past");
+      if (i === state.reasonDepth) pip.classList.add("is-current");
+      pip.textContent = String(i);
+      els.layerPips.appendChild(pip);
+    }
   }
 
   function syncReasonUi() {
     if (els.reasonToggle) els.reasonToggle.checked = !!state.reasonMode;
     if (els.boardStage) els.boardStage.classList.toggle("is-reason", !!state.reasonMode);
     if (els.clearReason) els.clearReason.disabled = !state.reasonMode;
+    if (els.reasonLayers) els.reasonLayers.hidden = !state.reasonMode;
+    if (els.reasonBack) els.reasonBack.disabled = !state.reasonMode || state.reasonDepth <= 1;
+    if (els.reasonNext) {
+      els.reasonNext.disabled =
+        !state.reasonMode ||
+        state.reasonDepth >= MAX_REASON_DEPTH ||
+        !layerHasMarks(state.reasonDepth);
+    }
+    renderLayerPips();
     refreshHintText();
   }
 
-  function clearReasonMarks() {
-    if (state.status !== "playing" || !state.reasonMode || !state.marks.length) return;
+  function clearHintCells(shouldClear) {
     var n = state.marks.length;
     var changed = false;
     for (var r = 0; r < n; r++) {
       for (var c = 0; c < n; c++) {
-        var mark = state.marks[r][c];
-        if (mark !== HINT_STAR && mark !== HINT_CROSS) continue;
+        if (!isHintMark(state.marks[r][c])) continue;
+        if (!shouldClear(layerOf(r, c))) continue;
         state.marks[r][c] = EMPTY;
+        state.layers[r][c] = 0;
         updateCell(r, c);
         changed = true;
       }
     }
-    if (changed) persistDraft();
+    return changed;
+  }
+
+  function clearReasonMarks() {
+    if (state.status !== "playing" || !state.reasonMode || !state.marks.length) return;
+    clearHintCells(function () {
+      return true;
+    });
+    state.reasonDepth = 1;
+    syncReasonUi();
+    persistDraft();
+  }
+
+  function nextReasonLayer() {
+    if (state.status !== "playing" || !state.reasonMode) return;
+    if (state.reasonDepth >= MAX_REASON_DEPTH || !layerHasMarks(state.reasonDepth)) return;
+    state.reasonDepth += 1;
+    refreshLockedCells();
+    syncReasonUi();
+    persistDraft();
+  }
+
+  function backtrackReasonLayer() {
+    if (state.status !== "playing" || !state.reasonMode || state.reasonDepth <= 1) return;
+    var depth = state.reasonDepth;
+    clearHintCells(function (layer) {
+      return layer >= depth;
+    });
+    state.reasonDepth = depth - 1;
+    refreshLockedCells();
+    syncReasonUi();
+    persistDraft();
+  }
+
+  function refreshLockedCells() {
+    var n = state.marks.length;
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (isHintMark(state.marks[r][c])) updateCell(r, c);
+      }
+    }
   }
 
   function refreshHintText() {
     if (state.reasonMode) {
+      var prefix = "推理第 " + state.reasonDepth + " 層：";
       els.hint.textContent = state.coarsePointer
-        ? "推理中：單擊問號叉叉可滑動 · 雙擊問號星星"
-        : "推理中：左鍵問號星星 · 右鍵問號叉叉";
+        ? prefix + "單擊問號叉叉可滑動 · 雙擊問號星星"
+        : prefix + "左鍵問號星星 · 右鍵問號叉叉";
       return;
     }
     els.hint.textContent = state.coarsePointer
@@ -412,9 +504,11 @@
   }
 
   function paintCellContent(btn, mark, r, c, drop) {
-    btn.classList.toggle("is-hint", mark === HINT_STAR || mark === HINT_CROSS);
+    var hint = isHintMark(mark);
+    btn.classList.toggle("is-hint", hint);
+    btn.classList.toggle("is-hint-past", hint && state.reasonMode && layerOf(r, c) < state.reasonDepth);
     btn.classList.remove("is-dropping");
-    btn.innerHTML = markHtml(mark);
+    btn.innerHTML = markHtml(mark, layerOf(r, c));
     if (state.status === "lost" && isStarCell(r, c) && mark !== STAR) {
       btn.classList.add("is-revealed");
       btn.innerHTML = starSvg();
@@ -448,6 +542,7 @@
     if (state.marks[r][c] === CROSS || state.marks[r][c] === HINT_CROSS) return;
     if (isStarCell(r, c)) {
       state.marks[r][c] = STAR;
+      state.layers[r][c] = 0;
       updateCell(r, c, true);
       persistDraft();
       if (placedStarCount() === state.puzzle.n) endGame(true);
@@ -465,8 +560,11 @@
     if (state.marks[r][c] === STAR) return;
     if (state.marks[r][c] === CROSS && isHintMark(value)) return;
     if (state.marks[r][c] === value) return;
+    var hadMarks = state.reasonMode && layerHasMarks(state.reasonDepth);
     state.marks[r][c] = value;
+    state.layers[r][c] = isHintMark(value) ? state.reasonDepth : 0;
     updateCell(r, c, value === STAR || value === CROSS || value === HINT_STAR || value === HINT_CROSS);
+    if (state.reasonMode && hadMarks !== layerHasMarks(state.reasonDepth)) syncReasonUi();
     persistDraft();
   }
 
@@ -483,12 +581,14 @@
   function toggleHint(r, c, kind) {
     if (state.status !== "playing") return;
     if (state.marks[r][c] === STAR || state.marks[r][c] === CROSS) return;
+    if (isLockedHint(r, c)) return;
     setMark(r, c, state.marks[r][c] === kind ? EMPTY : kind);
   }
 
   function startPaint(r, c, kind) {
     if (state.status !== "playing") return;
     if (state.marks[r][c] === STAR) return;
+    if (isLockedHint(r, c)) return;
     if (isHintMark(kind) && state.marks[r][c] === CROSS) return;
     if (kind === HINT_STAR && state.marks[r][c] === HINT_CROSS) return;
     var next = state.marks[r][c] === kind ? EMPTY : kind;
@@ -499,6 +599,7 @@
   function applyPaint(r, c) {
     if (!state.crossPaint) return;
     if (state.marks[r][c] === STAR) return;
+    if (isLockedHint(r, c)) return;
     if (isHintMark(state.crossPaint.kind) && state.marks[r][c] === CROSS) return;
     if (state.crossPaint.kind === HINT_STAR && state.marks[r][c] === HINT_CROSS) return;
     if (state.crossPaint.value === EMPTY) {
@@ -530,6 +631,7 @@
   }
 
   function onTouchStar(r, c) {
+    if (isLockedHint(r, c)) return;
     if (state.marks[r][c] === CROSS || state.marks[r][c] === HINT_CROSS) {
       setMark(r, c, EMPTY);
     }
@@ -593,6 +695,7 @@
       var cell = pendingStars[i];
       if (state.marks[cell[0]][cell[1]] !== HINT_STAR) continue;
       state.marks[cell[0]][cell[1]] = EMPTY;
+      state.layers[cell[0]][cell[1]] = 0;
       tryPlaceStar(cell[0], cell[1]);
     }
   }
@@ -605,6 +708,7 @@
     }
     if (state.reasonMode && !next) commitReasonMarks();
     state.reasonMode = next;
+    state.reasonDepth = 1;
     syncReasonUi();
     persistDraft();
   }
@@ -691,6 +795,17 @@
     });
   }
 
+  function restoreLayers(draft, n) {
+    var saved = draft.layers && draft.layers.length === n ? draft.layers : null;
+    return draft.marks.map(function (row, r) {
+      return row.map(function (mark, c) {
+        if (!isHintMark(mark)) return 0;
+        var layer = saved && saved[r] ? saved[r][c] | 0 : 0;
+        return layer >= 1 && layer <= MAX_REASON_DEPTH ? layer : 1;
+      });
+    });
+  }
+
   function stopScoreAnim() {
     if (state.scoreAnimId) {
       cancelAnimationFrame(state.scoreAnimId);
@@ -739,11 +854,15 @@
       state.marks = draft.marks.map(function (row) {
         return row.slice();
       });
+      state.layers = restoreLayers(draft, puzzle.n);
       state.lives = 1;
       if (typeof draft.reasonMode === "boolean") state.reasonMode = draft.reasonMode;
+      state.reasonDepth = Math.max(1, Math.min(MAX_REASON_DEPTH, draft.reasonDepth | 0 || 1));
       startTimer(draft.elapsed || 0);
     } else {
       state.marks = emptyMarks(puzzle.n);
+      state.layers = emptyMarks(puzzle.n);
+      state.reasonDepth = 1;
       state.lives = 1;
       startTimer(0);
     }
@@ -874,6 +993,9 @@
   els.clearReason.addEventListener("click", function () {
     clearReasonMarks();
   });
+
+  els.reasonNext.addEventListener("click", nextReasonLayer);
+  els.reasonBack.addEventListener("click", backtrackReasonLayer);
 
   window.addEventListener("pointerdown", updatePointerMode, { once: true });
   var lastTouchEndAt = 0;
