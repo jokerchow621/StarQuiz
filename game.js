@@ -63,6 +63,8 @@
     puzzle: null,
     marks: [],
     layers: [],
+    order: [],
+    orderSeq: 0,
     lives: 1,
     status: "idle",
     mode: "star",
@@ -179,6 +181,9 @@
         return row.slice();
       }),
       layers: state.layers.map(function (row) {
+        return row.slice();
+      }),
+      order: state.order.map(function (row) {
         return row.slice();
       }),
       lives: 1,
@@ -324,6 +329,34 @@
     return false;
   }
 
+  function layerOriginKeys() {
+    var best = {};
+    var n = state.marks.length;
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (!isHintMark(state.marks[r][c])) continue;
+        var layer = layerOf(r, c);
+        var seq = state.order[r][c];
+        if (!best[layer] || seq < best[layer].seq) best[layer] = { seq: seq, key: r + "," + c };
+      }
+    }
+    var keys = {};
+    Object.keys(best).forEach(function (layer) {
+      keys[best[layer].key] = true;
+    });
+    return keys;
+  }
+
+  function syncOriginMarks() {
+    if (!els.board) return;
+    var keys = layerOriginKeys();
+    var cells = els.board.querySelectorAll(".cell");
+    for (var i = 0; i < cells.length; i++) {
+      var key = cells[i].dataset.r + "," + cells[i].dataset.c;
+      cells[i].classList.toggle("is-layer-origin", !!keys[key]);
+    }
+  }
+
   function renderLayerPips() {
     if (!els.layerPips) return;
     els.layerPips.innerHTML = "";
@@ -362,10 +395,12 @@
         if (!shouldClear(layerOf(r, c))) continue;
         state.marks[r][c] = EMPTY;
         state.layers[r][c] = 0;
+        state.order[r][c] = 0;
         updateCell(r, c);
         changed = true;
       }
     }
+    if (changed) syncOriginMarks();
     return changed;
   }
 
@@ -481,6 +516,7 @@
         els.board.appendChild(btn);
       }
     }
+    syncOriginMarks();
   }
 
   function flashWrong(r, c) {
@@ -561,9 +597,13 @@
     if (state.marks[r][c] === CROSS && isHintMark(value)) return;
     if (state.marks[r][c] === value) return;
     var hadMarks = state.reasonMode && layerHasMarks(state.reasonDepth);
+    var wasHint = isHintMark(state.marks[r][c]);
     state.marks[r][c] = value;
     state.layers[r][c] = isHintMark(value) ? state.reasonDepth : 0;
+    if (!isHintMark(value)) state.order[r][c] = 0;
+    else if (!wasHint) state.order[r][c] = ++state.orderSeq;
     updateCell(r, c, value === STAR || value === CROSS || value === HINT_STAR || value === HINT_CROSS);
+    if (wasHint || isHintMark(value)) syncOriginMarks();
     if (state.reasonMode && hadMarks !== layerHasMarks(state.reasonDepth)) syncReasonUi();
     persistDraft();
   }
@@ -696,8 +736,10 @@
       if (state.marks[cell[0]][cell[1]] !== HINT_STAR) continue;
       state.marks[cell[0]][cell[1]] = EMPTY;
       state.layers[cell[0]][cell[1]] = 0;
+      state.order[cell[0]][cell[1]] = 0;
       tryPlaceStar(cell[0], cell[1]);
     }
+    syncOriginMarks();
   }
 
   function setReasonMode(on) {
@@ -806,6 +848,18 @@
     });
   }
 
+  function restoreOrder(draft, n) {
+    var saved = draft.order && draft.order.length === n ? draft.order : null;
+    var seq = 0;
+    return draft.marks.map(function (row, r) {
+      return row.map(function (mark, c) {
+        if (!isHintMark(mark)) return 0;
+        var value = saved && saved[r] ? saved[r][c] | 0 : 0;
+        return value > 0 ? value : ++seq;
+      });
+    });
+  }
+
   function stopScoreAnim() {
     if (state.scoreAnimId) {
       cancelAnimationFrame(state.scoreAnimId);
@@ -855,6 +909,10 @@
         return row.slice();
       });
       state.layers = restoreLayers(draft, puzzle.n);
+      state.order = restoreOrder(draft, puzzle.n);
+      state.orderSeq = state.order.reduce(function (max, row) {
+        return Math.max(max, Math.max.apply(null, row));
+      }, 0);
       state.lives = 1;
       if (typeof draft.reasonMode === "boolean") state.reasonMode = draft.reasonMode;
       state.reasonDepth = Math.max(1, Math.min(MAX_REASON_DEPTH, draft.reasonDepth | 0 || 1));
@@ -862,6 +920,8 @@
     } else {
       state.marks = emptyMarks(puzzle.n);
       state.layers = emptyMarks(puzzle.n);
+      state.order = emptyMarks(puzzle.n);
+      state.orderSeq = 0;
       state.reasonDepth = 1;
       state.lives = 1;
       startTimer(0);

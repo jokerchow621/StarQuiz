@@ -703,6 +703,20 @@ button {
 
 .hint-q { background: var(--layer, #2a2116); }
 
+.cell.is-layer-origin::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(36, 29, 20, 0.35), inset 0 0 0 1px rgba(36, 29, 20, 0.35);
+  pointer-events: none;
+}
+
+.board.is-showcase .cell.is-layer-origin::after {
+  display: none;
+}
+
 .cell.is-hint-past .mark,
 .cell.is-hint-past .hint-q {
   opacity: 0.45;
