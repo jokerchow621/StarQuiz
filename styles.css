@@ -919,3 +919,7 @@ button {
   text-align: right;
   pointer-events: none;
 }
+
+.brand .app-version {
+  text-align: center;
+}
