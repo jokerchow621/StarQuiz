@@ -1,0 +1,178 @@
+{
+  "status": "experimental-not-in-campaign",
+  "targetDepth": 3,
+  "verifiedDepth": 2,
+  "model": "star-group-support-failed-literal-v1",
+  "shape": "000001112/300001122/330004422/300335442/303335544/333665554/777655884/776658888/766666668",
+  "regions": [
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      2
+    ],
+    [
+      3,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      2,
+      2
+    ],
+    [
+      3,
+      3,
+      0,
+      0,
+      0,
+      4,
+      4,
+      2,
+      2
+    ],
+    [
+      3,
+      0,
+      0,
+      3,
+      3,
+      5,
+      4,
+      4,
+      2
+    ],
+    [
+      3,
+      0,
+      3,
+      3,
+      3,
+      5,
+      5,
+      4,
+      4
+    ],
+    [
+      3,
+      3,
+      3,
+      6,
+      6,
+      5,
+      5,
+      5,
+      4
+    ],
+    [
+      7,
+      7,
+      7,
+      6,
+      5,
+      5,
+      8,
+      8,
+      4
+    ],
+    [
+      7,
+      7,
+      6,
+      6,
+      5,
+      8,
+      8,
+      8,
+      8
+    ],
+    [
+      7,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      8
+    ]
+  ],
+  "solution": [
+    5,
+    7,
+    2,
+    6,
+    0,
+    3,
+    1,
+    4,
+    8
+  ],
+  "certificate": {
+    "model": "star-group-support-failed-literal-v1",
+    "complete": true,
+    "assumptionDepth": 2,
+    "layers": [
+      {
+        "depth": 0,
+        "remaining": 9,
+        "candidates": 81,
+        "probes": 0
+      },
+      {
+        "depth": 1,
+        "remaining": 9,
+        "candidates": 76,
+        "probes": 235
+      },
+      {
+        "depth": 2,
+        "remaining": 0,
+        "candidates": 9,
+        "probes": 3760
+      }
+    ],
+    "solution": [
+      5,
+      7,
+      2,
+      6,
+      0,
+      3,
+      1,
+      4,
+      8
+    ],
+    "lowerBound": 2,
+    "nodes": 3998
+  },
+  "shallowerCertificate": {
+    "model": "star-group-support-failed-literal-v1",
+    "complete": false,
+    "assumptionDepth": null,
+    "layers": [
+      {
+        "depth": 0,
+        "remaining": 9,
+        "candidates": 81,
+        "probes": 0
+      },
+      {
+        "depth": 1,
+        "remaining": 9,
+        "candidates": 76,
+        "probes": 235
+      }
+    ],
+    "lowerBound": 2,
+    "nodes": 237
+  }
+}
