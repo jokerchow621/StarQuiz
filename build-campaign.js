@@ -31,6 +31,7 @@ for (const candidate of supplied) {
   const row = certify(decode(candidate.shape));
   if (row.depth !== candidate.depth) throw new Error("Candidate depth changed: " + candidate.shape);
   if (seen.has(row.shape)) continue;
+  row.replaces = candidate.replaces;
   seen.add(row.shape);
   const n = row.regions.length;
   if (!additions.has(n)) additions.set(n, []);
@@ -50,7 +51,11 @@ for (const chapter of Puzzle.CHAPTERS) {
   rows.sort(compare);
   for (const row of extra) {
     let replace = -1;
-    rows.forEach((old, i) => { if (!old.imported && old.depth < row.depth) replace = i; });
+    if (row.replaces) {
+      replace = rows.findIndex(old => old.shape === row.replaces && !old.imported);
+    } else {
+      rows.forEach((old, i) => { if (!old.imported && old.depth < row.depth) replace = i; });
+    }
     if (replace < 0) throw new Error("No shallower board to replace in " + chapter.label);
     rows.splice(replace, 1);
     row.imported = true;
