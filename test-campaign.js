@@ -28,7 +28,7 @@ samples.forEach(function (lv) {
   const spec = Puzzle.levelSpec(lv);
   assert(a.n === spec.n, "格數不符: " + lv);
   const rated = Puzzle.scoreDifficulty(a.regions, a.stars);
-  assert(rated.score >= 1 && rated.score <= 100, "難度分數必須在 1-100: " + lv + " = " + rated.score);
+  assert(rated.score >= 0 && rated.score <= 100, "難度分數必須在 0-100: " + lv + " = " + rated.score);
   assert(a.difficulty === rated.score, "關卡應帶有評分: " + lv);
   const key = Puzzle.puzzleKey(a);
   assert(!keys[key], "關卡重複: " + lv + " 與 " + keys[key]);

@@ -598,6 +598,9 @@
   }
 
   var DIFFICULTY_MAX = 100;
+  // Fixed calibration for the current certified campaign (raw scores 7–64).
+  var CAMPAIGN_SCORE_MIN = 7;
+  var CAMPAIGN_SCORE_MAX = 64;
   var DIFFICULTY_WEIGHTS = {
     grid: 0.2,
     solving: 0.25,
@@ -1027,7 +1030,9 @@
     var within = 0.65 * effort + 0.2 * logicalScore / 100 + 0.15 * parts.grid / 100;
     var score = Math.round(band[0] + (band[1] - band[0]) * within);
     return {
-      score: score,
+      score: Math.round(clamp((score - CAMPAIGN_SCORE_MIN) /
+        (CAMPAIGN_SCORE_MAX - CAMPAIGN_SCORE_MIN) * DIFFICULTY_MAX, 0, DIFFICULTY_MAX)),
+      rawScore: score,
       // Preserve within-band precision for campaign ordering.
       orderScore: band[0] + (band[1] - band[0]) * within,
       logicalScore: logicalScore,

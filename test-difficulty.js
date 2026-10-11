@@ -10,7 +10,7 @@ assert(Math.abs(weightSum - 1) < 1e-9, "權重總和必須為 1");
 assert(Puzzle.DIFFICULTY_MAX === 100, "上限必須為 100");
 
 function checkRating(rated, label) {
-  assert(rated.score >= 1 && rated.score <= 100, label + " 分數超出 1-100: " + rated.score);
+  assert(rated.score >= 0 && rated.score <= 100, label + " 分數超出 0-100: " + rated.score);
   assert(rated.maxScore === 100, label + " 缺少上限");
   ["grid", "solving", "technique", "steps"].forEach(function (key) {
     assert(rated.parts[key] >= 0 && rated.parts[key] <= 100, label + " 分項超出範圍: " + key);
@@ -52,3 +52,13 @@ assert(easy.score < hard.score, "第 1 關應比第 999 關低分: " + easy.scor
 });
 
 console.log("all passed");
+
+// Mapping changes the scale, not the underlying reasoning or ordering.
+let campaignMin = Infinity, campaignMax = -Infinity;
+for (let level = 1; level <= 999; level++) {
+  const rating = Puzzle.generateLevel(level).rating;
+  assert(rating.score === Math.round(Math.max(0, Math.min(100, (rating.rawScore - 7) / 57 * 100))), "Calibration: " + level);
+  campaignMin = Math.min(campaignMin, rating.score);
+  campaignMax = Math.max(campaignMax, rating.score);
+}
+assert(campaignMin === 0 && campaignMax === 100, "Campaign must span 0–100");
