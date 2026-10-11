@@ -1,0 +1,187 @@
+{
+  "status": "experimental-not-in-campaign",
+  "targetDepth": 3,
+  "verifiedDepth": 2,
+  "model": "star-group-support-failed-literal-v1",
+  "shape": "000000001/220031111/422033311/444003335/444443355/466645555/466447777/664468877/666668887",
+  "regions": [
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      2,
+      2,
+      0,
+      0,
+      3,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      4,
+      2,
+      2,
+      0,
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    [
+      4,
+      4,
+      4,
+      0,
+      0,
+      3,
+      3,
+      3,
+      5
+    ],
+    [
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      5,
+      5
+    ],
+    [
+      4,
+      6,
+      6,
+      6,
+      4,
+      5,
+      5,
+      5,
+      5
+    ],
+    [
+      4,
+      6,
+      6,
+      4,
+      4,
+      7,
+      7,
+      7,
+      7
+    ],
+    [
+      6,
+      6,
+      4,
+      4,
+      6,
+      8,
+      8,
+      7,
+      7
+    ],
+    [
+      6,
+      6,
+      6,
+      6,
+      6,
+      8,
+      8,
+      8,
+      7
+    ]
+  ],
+  "solution": [
+    8,
+    4,
+    1,
+    3,
+    0,
+    6,
+    2,
+    7,
+    5
+  ],
+  "score": 100,
+  "rawScore": 64,
+  "orderScore": 64.47039527813988,
+  "comparison": {
+    "level": 999,
+    "shape": "000001112/300001122/330004422/300335442/303335544/333665554/777655884/776658888/766666668",
+    "orderScore": 64.32761005765306,
+    "score": 100
+  },
+  "certificate": {
+    "model": "star-group-support-failed-literal-v1",
+    "complete": true,
+    "assumptionDepth": 2,
+    "layers": [
+      {
+        "depth": 0,
+        "remaining": 9,
+        "candidates": 79,
+        "probes": 0
+      },
+      {
+        "depth": 1,
+        "remaining": 9,
+        "candidates": 77,
+        "probes": 156
+      },
+      {
+        "depth": 2,
+        "remaining": 0,
+        "candidates": 9,
+        "probes": 3957
+      }
+    ],
+    "solution": [
+      8,
+      4,
+      1,
+      3,
+      0,
+      6,
+      2,
+      7,
+      5
+    ],
+    "lowerBound": 2,
+    "nodes": 4116
+  },
+  "shallowerCertificate": {
+    "model": "star-group-support-failed-literal-v1",
+    "complete": false,
+    "assumptionDepth": null,
+    "layers": [
+      {
+        "depth": 0,
+        "remaining": 9,
+        "candidates": 79,
+        "probes": 0
+      },
+      {
+        "depth": 1,
+        "remaining": 9,
+        "candidates": 77,
+        "probes": 156
+      }
+    ],
+    "lowerBound": 2,
+    "nodes": 158
+  }
+}
