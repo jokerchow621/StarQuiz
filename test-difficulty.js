@@ -1,4 +1,5 @@
 const Puzzle = require("./puzzle.js");
+const Reasoning = require("./reasoning.js");
 
 function assert(cond, message) {
   if (!cond) throw new Error(message);
@@ -21,6 +22,16 @@ function checkRating(rated, label) {
   assert(Math.abs(Math.round(Math.min(100, Math.max(1, summed))) - rated.logicalScore) < 1e-9, label + " 邏輯指標加權結果不一致");
   assert(rated.reasoning.complete, label + " 假設深度未驗證");
   assert(Number.isInteger(rated.assumptionDepth), label + " 缺少假設深度");
+  assert(rated.reasoning.model === Reasoning.MODEL, label + " 使用過期模型");
+  const opening = rated.reasoning.opening;
+  assert(opening.candidates >= opening.forced + opening.remaining, label + " 開局候選不合法");
+  assert(opening.eliminated === opening.supportEliminations + opening.hallEliminations, label + " 排除統計不一致");
+  assert(rated.residual >= 0 && rated.residual <= 1, label + " 剩餘核心超出範圍");
+  const bands = [[5, 29], [30, 49], [50, 69], [70, 84], [85, 94], [95, 100]];
+  const band = bands[rated.assumptionDepth];
+  const expectedOrder = band[0] + (band[1] - band[0]) *
+    (0.65 * rated.effort + 0.2 * rated.residual + 0.15 * rated.parts.grid / 100);
+  assert(Math.abs(rated.orderScore - expectedOrder) < 1e-12, label + " 新評分加權不一致");
   assert(Array.isArray(rated.techniques), label + " 缺少技巧列表");
   assert(rated.logicSteps >= 0, label + " 推理步數不合法");
 }
@@ -51,14 +62,21 @@ assert(easy.score < hard.score, "第 1 關應比第 999 關低分: " + easy.scor
   checkRating(Puzzle.scoreDifficulty(Puzzle.fallbackPuzzle(n).regions), n + " fallback");
 });
 
-console.log("all passed");
-
 // Mapping changes the scale, not the underlying reasoning or ordering.
+const calibration = Puzzle.DIFFICULTY_CALIBRATION;
+assert(calibration.model === Reasoning.MODEL, "校準使用過期模型");
 let campaignMin = Infinity, campaignMax = -Infinity;
+let minOrder = Infinity, maxOrder = -Infinity;
 for (let level = 1; level <= 999; level++) {
   const rating = Puzzle.generateLevel(level).rating;
-  assert(rating.score === Math.round(Math.max(0, Math.min(100, (rating.rawScore - 7) / 57 * 100))), "Calibration: " + level);
+  const expected = Math.round(Math.max(0, Math.min(100,
+    (rating.orderScore - calibration.minOrder) / (calibration.maxOrder - calibration.minOrder) * 100)));
+  assert(rating.score === expected, "Calibration: " + level);
   campaignMin = Math.min(campaignMin, rating.score);
   campaignMax = Math.max(campaignMax, rating.score);
+  minOrder = Math.min(minOrder, rating.orderScore);
+  maxOrder = Math.max(maxOrder, rating.orderScore);
 }
 assert(campaignMin === 0 && campaignMax === 100, "Campaign must span 0–100");
+assert(minOrder === calibration.minOrder && maxOrder === calibration.maxOrder, "校準必須反映完整題庫");
+console.log("all passed");

@@ -22,10 +22,14 @@ for (const file of files) {
   assert(Puzzle.starsAreLegal(proof.solution), file);
   assert(Puzzle.validateRegions(regions, proof.solution), file);
   assert.equal(Puzzle.countSolutions(regions, 2), 1, file);
-  const shallow = Reasoning.analyze(regions, { maxDepth: fixture.verifiedDepth - 1 });
-  assert.equal(shallow.complete, false, 'Shallower deductions solved: ' + file);
-  assert.equal(shallow.limitReached, undefined, 'Limit is not evidence: ' + file);
-  assert.deepEqual(shallow, fixture.shallowerCertificate, file);
+  if (fixture.verifiedDepth === 0) {
+    assert.equal(fixture.shallowerCertificate, null, 'Depth zero has no shallower analysis: ' + file);
+  } else {
+    const shallow = Reasoning.analyze(regions, { maxDepth: fixture.verifiedDepth - 1 });
+    assert.equal(shallow.complete, false, 'Shallower deductions solved: ' + file);
+    assert.equal(shallow.limitReached, undefined, 'Limit is not evidence: ' + file);
+    assert.deepEqual(shallow, fixture.shallowerCertificate, file);
+  }
   const rating = Puzzle.scoreDifficulty(regions);
   if (fixture.orderScore !== undefined) {
     assert.equal(rating.orderScore, fixture.orderScore, file);
@@ -38,6 +42,7 @@ for (const file of files) {
   }
   if (fixture.status === 'experimental-not-in-campaign') {
     assert(!Puzzle.SHAPE_BANK_COMPACT.includes(fixture.shape), file);
+    assert.equal(fixture.comparison.model, Reasoning.MODEL, 'Stale comparison: ' + file);
     assert(rating.orderScore > fixture.comparison.orderScore, 'No improvement: ' + file);
   }
   console.log(file + ': depth ' + proof.assumptionDepth + ', score ' + rating.score +

@@ -39,14 +39,15 @@ for (const candidate of supplied) {
 }
 
 const bank = [""];
+const orders = [];
 for (const chapter of Puzzle.CHAPTERS) {
   const rows = existing.filter(row => row.regions.length === chapter.n);
   const extra = additions.get(chapter.n) || [];
   // Replace shallow tail candidates while keeping the introductory boards,
   // exact chapter lengths, and a unique shape per board.
-  // Keep 9x9 workload distinctions that the displayed integer score rounds away.
+  // Keep precise difficulty distinctions in every chapter, before mapping.
   const compare = (a, b) => a.depth - b.depth ||
-    (chapter.n === 9 ? a.rating.orderScore - b.rating.orderScore : a.rating.score - b.rating.score) ||
+    a.rating.orderScore - b.rating.orderScore ||
     a.rating.reasoning.nodes - b.rating.reasoning.nodes || a.shape.localeCompare(b.shape);
   rows.sort(compare);
   for (const row of extra) {
@@ -64,7 +65,11 @@ for (const chapter of Puzzle.CHAPTERS) {
   rows.sort(compare);
   if (rows.length !== chapter.to - chapter.from + 1) throw new Error("Chapter length changed");
   const histogram = {};
-  rows.forEach(row => { histogram[row.depth] = (histogram[row.depth] || 0) + 1; bank.push(row.shape); });
+  rows.forEach(row => {
+    histogram[row.depth] = (histogram[row.depth] || 0) + 1;
+    bank.push(row.shape);
+    orders.push(row.rating.orderScore);
+  });
   console.log(chapter.label, JSON.stringify(histogram));
 }
 if (bank.length !== 1000 || new Set(bank).size !== 1000) throw new Error("Duplicate or missing shape");
@@ -74,11 +79,17 @@ for (const shape of requiredShapes) {
 
 const file = path.join(__dirname, "puzzle.js");
 const original = fs.readFileSync(file, "utf8");
-for (const marker of ["SHAPE_BANK", "CAMPAIGN_SOURCE"]) {
+for (const marker of ["SHAPE_BANK", "CAMPAIGN_SOURCE", "DIFFICULTY_CALIBRATION"]) {
   if (!original.includes("/* <" + marker + "> */") || !original.includes("/* </" + marker + "> */")) {
     throw new Error("Missing bank marker: " + marker);
   }
 }
+const calibration = {
+  model: Reasoning.MODEL,
+  minOrder: Math.min(...orders),
+  maxOrder: Math.max(...orders),
+};
+if (!(calibration.maxOrder > calibration.minOrder)) throw new Error("Invalid calibration range");
 const next = original.replace(
   /\/\* <SHAPE_BANK> \*\/[\s\S]*?\/\* <\/SHAPE_BANK> \*\//,
   "/* <SHAPE_BANK> */\n  var SHAPE_BANK_COMPACT = " + JSON.stringify(bank) + ";\n  /* </SHAPE_BANK> */"
@@ -86,7 +97,12 @@ const next = original.replace(
   /\/\* <CAMPAIGN_SOURCE> \*\/[\s\S]*?\/\* <\/CAMPAIGN_SOURCE> \*\//,
   "/* <CAMPAIGN_SOURCE> */\n  var CAMPAIGN_SOURCE = " +
     JSON.stringify(Array.from({ length: 1000 }, (_, i) => i)) + ";\n  /* </CAMPAIGN_SOURCE> */"
+).replace(
+  /\/\* <DIFFICULTY_CALIBRATION> \*\/[\s\S]*?\/\* <\/DIFFICULTY_CALIBRATION> \*\//,
+  "/* <DIFFICULTY_CALIBRATION> */\n  var DIFFICULTY_CALIBRATION = " + JSON.stringify(calibration) +
+    ";\n  /* </DIFFICULTY_CALIBRATION> */"
 );
 if (!next.includes(JSON.stringify(bank))) throw new Error("Bank marker missing");
 fs.writeFileSync(file, next);
 console.log("Saved verified campaign. Run node audit-uniqueness.js and node test-reasoning.js.");
+console.log("Score calibration", JSON.stringify(calibration));

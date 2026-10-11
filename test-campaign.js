@@ -65,12 +65,12 @@ for (let lv = 251; lv <= 290; lv++) {
   const p = Puzzle.generateSourceLevel(lv);
   const s = Puzzle.scoreDifficulty(p.regions, p.stars);
   assert(s.singleton <= 2, "6x6 前段單格過多: 第 " + lv + " 關有 " + s.singleton + " 個");
-  assert(s.leftoverStars <= 2, "6x6 前段過難: 第 " + lv + " 關 leftover " + s.leftoverStars);
+  assert(s.assumptionDepth === 0 && s.reasoning.complete, "6x6 前段應能直接排除解完: 第 " + lv + " 關");
 }
 // The new bank is ordered by certified depth. Test that late 6x6 boards
 // actually resist exclusion, rather than using absence of singleton regions
 // as a proxy (a singleton does not guarantee the rest of the board is easy).
-for (let lv = 431; lv <= 450; lv++) {
+for (let lv = 443; lv <= 450; lv++) {
   const p = Puzzle.generateLevel(lv);
   const proof = Puzzle.analyzeReasoning(p.regions, { maxDepth: 0 });
   assert(!proof.complete && proof.lowerBound === 1, "6x6 後段必須需要假設: 第 " + lv + " 關");

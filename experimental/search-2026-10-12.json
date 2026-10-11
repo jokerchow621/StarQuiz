@@ -76,5 +76,46 @@
       "B": 998,
       "A": 999
     }
+  },
+  "status": "historical-search-report",
+  "currentRevalidation": {
+    "date": "2026-10-12",
+    "model": "star-group-support-hall-failed-literal-v2",
+    "calibration": {
+      "model": "star-group-support-hall-failed-literal-v2",
+      "minOrder": 6.553634167291669,
+      "maxOrder": 38.819468362169026
+    },
+    "campaignVersion": "v2026.10.12.3",
+    "candidates": [
+      {
+        "file": "9x9-candidate.json",
+        "shape": "000001112/300001122/330004422/300335442/303335544/333665554/777655884/776658888/766666668",
+        "level": 998,
+        "verifiedDepth": 1,
+        "score": 97,
+        "rawScore": 38,
+        "orderScore": 37.69093050363986
+      },
+      {
+        "file": "9x9-harder-a.json",
+        "shape": "000000111/223340015/223344115/223344415/666677445/677775555/666677855/667667885/667777888",
+        "level": 974,
+        "verifiedDepth": 0,
+        "score": 13,
+        "rawScore": 11,
+        "orderScore": 10.612337682235713
+      },
+      {
+        "file": "9x9-harder-b.json",
+        "shape": "000000001/220031111/422033311/444003335/444443355/466645555/466447777/664468877/666668887",
+        "level": 995,
+        "verifiedDepth": 1,
+        "score": 94,
+        "rawScore": 37,
+        "orderScore": 36.82786799687321
+      }
+    ],
+    "note": "The top-level model, baseline, methods and campaignIntegration describe the original search and import. Hall group exclusions supersede those depth and difficulty claims; the current campaign contains no certified depth-two or depth-three board."
   }
 }

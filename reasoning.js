@@ -7,11 +7,13 @@
 
   // Depth is relative to these explicit rules, not to a particular player's
   // strategy. At depth zero: row/column/region singles and pairwise support
-  // (same column, same region, adjacent stars) are propagated to a fixed point.
+  // (same column, same region, adjacent stars), plus Hall group exclusions,
+  // are propagated to a fixed point. k regions confined to k rows/columns
+  // occupy those groups completely; the same rule applies in every direction.
   // At depth k, a candidate is removed only if assuming it produces a
   // contradiction after closing all deductions available at depth k - 1.
   // Repeating depth-one deductions is still depth one, however long the chain.
-  var MODEL = "star-group-support-failed-literal-v1";
+  var MODEL = "star-group-support-hall-failed-literal-v2";
 
   function copy(domains) {
     return domains.map(function (row) { return row.slice(); });
@@ -20,12 +22,16 @@
   function supportGraph(regions) {
     var n = regions.length;
     var groups = Array.from({ length: n * 3 }, function () { return []; });
+    var families = [[], [], []];
     for (var r = 0; r < n; r++) {
       for (var c = 0; c < n; c++) {
         var cell = r * n + c;
         groups[r].push(cell);
         groups[n + c].push(cell);
         groups[n * 2 + regions[r][c]].push(cell);
+        families[0][cell] = r;
+        families[1][cell] = c;
+        families[2][cell] = regions[r][c];
       }
     }
     var support = Array.from({ length: n * n }, function (_, cell) {
@@ -39,10 +45,14 @@
         });
       });
     });
-    return { groups: groups, support: support };
+    var sizes = Array(1 << n).fill(0);
+    for (var mask = 1; mask < sizes.length; mask++) {
+      sizes[mask] = sizes[mask & (mask - 1)] + 1;
+    }
+    return { groups: groups, support: support, families: families, sizes: sizes };
   }
 
-  function propagate(domains, graph) {
+  function propagate(domains, graph, stats) {
     var n = domains.length;
     var active = Array(n * n).fill(false);
     domains.forEach(function (row, r) {
@@ -50,6 +60,7 @@
     });
     var changed = true;
     while (changed) {
+      stats.rounds++;
       changed = false;
       for (var cell = 0; cell < active.length; cell++) {
         if (!active[cell]) continue;
@@ -59,6 +70,7 @@
         for (var g = 0; g < graph.groups.length; g++) {
           if (!graph.support[cell][g].some(function (other) { return active[other]; })) {
             active[cell] = false;
+            stats.supportEliminations++;
             changed = true;
             break;
           }
@@ -67,6 +79,38 @@
       if (graph.groups.some(function (group) {
         return !group.some(function (cell) { return active[cell]; });
       })) return null;
+      // Hall's counting rule: k source groups whose candidates touch only k
+      // target groups must occupy all of them. Batch each pair's removals so
+      // evaluating a subset cannot invent support from an already removed cell.
+      for (var from = 0; from < 3; from++) {
+        for (var to = 0; to < 3; to++) {
+          if (from === to) continue;
+          var edges = Array(n).fill(0);
+          for (var x = 0; x < active.length; x++) {
+            if (active[x]) edges[graph.families[from][x]] |= 1 << graph.families[to][x];
+          }
+          var union = Array(1 << n).fill(0);
+          var forbidden = Array(n).fill(0);
+          for (var subset = 1; subset < union.length; subset++) {
+            var bit = subset & -subset;
+            var index = 31 - Math.clz32(bit);
+            var targets = union[subset ^ bit] | edges[index];
+            union[subset] = targets;
+            if (graph.sizes[targets] < graph.sizes[subset]) return null;
+            if (graph.sizes[targets] !== graph.sizes[subset]) continue;
+            for (var id = 0; id < n; id++) {
+              if (!(subset & (1 << id))) forbidden[id] |= targets;
+            }
+          }
+          for (var y = 0; y < active.length; y++) {
+            if (active[y] && (forbidden[graph.families[from][y]] & (1 << graph.families[to][y]))) {
+              active[y] = false;
+              stats.hallEliminations++;
+              changed = true;
+            }
+          }
+        }
+      }
     }
     return domains.map(function (row, r) {
       return row.filter(function (c) { return active[r * n + c]; });
@@ -76,7 +120,7 @@
   function closed(regions, domains, depth, context) {
     context.nodes++;
     if (context.nodes > context.maxNodes) throw context.limit;
-    var current = propagate(copy(domains), context.graph);
+    var current = propagate(copy(domains), context.graph, context.stats);
     if (!current || !depth || current.every(function (row) { return row.length === 1; })) {
       return current;
     }
@@ -102,7 +146,7 @@
         context.memo.set(key, null);
         return null;
       }
-      current = propagate(current, context.graph);
+      current = propagate(current, context.graph, context.stats);
       if (!current || current.every(function (row) { return row.length === 1; })) break;
     }
     context.memo.set(key, current);
@@ -119,6 +163,7 @@
       maxNodes: options.maxNodes === undefined ? 250000 : options.maxNodes,
       memo: new Map(),
       limit: {},
+      stats: { rounds: 0, supportEliminations: 0, hallEliminations: 0 },
     };
     var domains = Array.from({ length: n }, function () {
       return Array.from({ length: n }, function (_, c) { return c; });
@@ -141,6 +186,17 @@
           candidates: domains.reduce(function (sum, row) { return sum + row.length; }, 0),
           probes: context.nodes - before - 1,
         });
+        if (depth === 0) {
+          result.opening = {
+            candidates: layers[0].candidates,
+            remaining: remaining,
+            forced: n - remaining,
+            eliminated: n * n - layers[0].candidates,
+            rounds: context.stats.rounds,
+            supportEliminations: context.stats.supportEliminations,
+            hallEliminations: context.stats.hallEliminations,
+          };
+        }
         if (!remaining) {
           result.complete = true;
           result.assumptionDepth = depth;
@@ -154,6 +210,7 @@
     }
     result.lowerBound = result.assumptionDepth === null ? layers.length : result.assumptionDepth;
     result.nodes = context.nodes;
+    result.domains = domains ? copy(domains) : null;
     return result;
   }
 
