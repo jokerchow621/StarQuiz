@@ -32,6 +32,10 @@ for (const file of files) {
     assert.equal(rating.score, fixture.score, file);
     assert.equal(rating.rawScore, fixture.rawScore, file);
   }
+  if (fixture.campaignLevel !== undefined) {
+    assert.equal(fixture.status, 'imported-as-level-' + fixture.campaignLevel, file);
+    assert.equal(Puzzle.SHAPE_BANK_COMPACT[fixture.campaignLevel], fixture.shape, 'Imported level moved: ' + file);
+  }
   if (fixture.status === 'experimental-not-in-campaign') {
     assert(!Puzzle.SHAPE_BANK_COMPACT.includes(fixture.shape), file);
     assert(rating.orderScore > fixture.comparison.orderScore, 'No improvement: ' + file);

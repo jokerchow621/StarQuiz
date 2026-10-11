@@ -1,5 +1,5 @@
 {
-  "status": "imported-as-level-999",
+  "status": "imported-as-level-997",
   "targetDepth": 3,
   "verifiedDepth": 2,
   "model": "star-group-support-failed-literal-v1",
@@ -174,5 +174,6 @@
     ],
     "lowerBound": 2,
     "nodes": 237
-  }
+  },
+  "campaignLevel": 997
 }

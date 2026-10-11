@@ -56,6 +56,25 @@
     "Disconnected layouts were allowed only as intermediate search states; saved fixtures are connected.",
     "Accelerated analysis matched the unchanged official verifier; saved fixtures were certified again by reasoning.js.",
     "Search failure is not a proof that depth-three 9x9 boards cannot exist.",
-    "Saved candidates remain outside the campaign."
-  ]
+    "Candidates were outside the campaign when this search completed; subsequently imported as levels 998 (B) and 999 (A)."
+  ],
+  "campaignIntegration": {
+    "version": "v2026.10.12.2",
+    "removedPreviousLevels": [
+      821,
+      822
+    ],
+    "shiftedPreviousLevels": [
+      823,
+      999
+    ],
+    "shiftedCurrentLevels": [
+      821,
+      997
+    ],
+    "imports": {
+      "B": 998,
+      "A": 999
+    }
+  }
 }
