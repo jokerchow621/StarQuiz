@@ -68,6 +68,6 @@ node design-puzzles.js 8 2 60 /tmp/designed-boards.jsonl
 
 ## 畫面版本
 
-`index.html` 的 `.app-version` 位於棋盤容器內，在格子右上方顯示版本，
-不覆蓋或攔截棋盤格操作。目前為 `v2026.10.11.2`（發布日期與當日序號）。發布新版時更新其文字及
+`index.html` 的 `.app-version` 位於 `.board-shell` 內、白色棋盤容器外，在白邊右上方顯示版本，
+不覆蓋或攔截棋盤格操作。目前為 `v2026.10.11.3`（發布日期與當日序號）。發布新版時更新其文字及
 `aria-label`，並提高修改過的 CSS／JavaScript 資源版本以避免舊快取。

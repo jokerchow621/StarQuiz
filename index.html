@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <link rel="stylesheet" href="styles.css?v=27" />
+    <link rel="stylesheet" href="styles.css?v=28" />
   </head>
   <body>
     <div class="app">
@@ -57,10 +57,12 @@
         </header>
 
         <div class="play-board">
-          <div class="board-stage">
-            <small class="app-version" aria-label="版本 v2026.10.11.2">v2026.10.11.2</small>
-            <div class="board-loading" id="board-loading" hidden>正在鋪陳星圖…</div>
-            <div class="board" id="board" role="grid"></div>
+          <div class="board-shell">
+            <small class="app-version" aria-label="版本 v2026.10.11.3">v2026.10.11.3</small>
+            <div class="board-stage">
+              <div class="board-loading" id="board-loading" hidden>正在鋪陳星圖…</div>
+              <div class="board" id="board" role="grid"></div>
+            </div>
           </div>
           <div class="play-score-wrap" id="play-score-wrap" aria-label="難度指數">
             <div class="play-score-bar" aria-hidden="true"><span id="play-score-fill"></span></div>

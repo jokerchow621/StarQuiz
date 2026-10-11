@@ -398,6 +398,11 @@ button {
   gap: 12px;
 }
 
+.board-shell {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .board-stage {
   position: relative;
   flex: 1 1 auto;
@@ -904,11 +909,11 @@ button {
   }
 }
 
-/* Align the version with the grid's upper-right edge without covering cells. */
+/* Keep the version above and outside the white board frame. */
 .app-version {
   display: block;
   margin-bottom: 6px;
-  color: var(--ink-soft);
+  color: var(--paper-deep);
   font-size: 11px;
   line-height: 1.4;
   text-align: right;
