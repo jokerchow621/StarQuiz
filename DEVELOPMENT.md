@@ -65,3 +65,9 @@ node design-puzzles.js 8 2 60 /tmp/designed-boards.jsonl
 
 玩家已通過的關卡進度會保留。未完成題目的暫存包含棋盤指紋；若同一
 關號換了題目，舊標記會被捨棄，避免套用到不同棋盤。
+
+## 畫面版本
+
+`index.html` 的共用 `.app-version` 在所有畫面及對話框右下角顯示版本，
+目前為 `v2026.10.11.1`（發布日期與當日序號）。發布新版時更新其文字及
+`aria-label`，並提高修改過的 CSS／JavaScript 資源版本以避免舊快取。
