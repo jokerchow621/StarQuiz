@@ -177,6 +177,7 @@
     state.save.lastLevel = state.level;
     state.save.draft = {
       level: state.level,
+      boardKey: puzzleLib().puzzleKey(state.puzzle),
       marks: state.marks.map(function (row) {
         return row.slice();
       }),
@@ -950,6 +951,9 @@
     var draft =
       !forceFresh && state.save.draft && state.save.draft.level === level ? state.save.draft : null;
     var puzzle = lib.generateLevel(level);
+    // Keep cleared progress, but never apply marks from a previous campaign
+    // board to a replacement puzzle at the same level number.
+    if (draft && draft.boardKey !== lib.puzzleKey(puzzle)) draft = null;
     var rated =
       puzzle.rating ||
       (typeof lib.scoreDifficulty === "function" ? lib.scoreDifficulty(puzzle.regions) : null);

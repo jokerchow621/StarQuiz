@@ -18,7 +18,9 @@ function checkRating(rated, label) {
   });
   const summed =
     rated.weighted.grid + rated.weighted.solving + rated.weighted.technique + rated.weighted.steps;
-  assert(Math.abs(Math.round(Math.min(100, Math.max(1, summed))) - rated.score) < 1e-9, label + " 加權結果不一致");
+  assert(Math.abs(Math.round(Math.min(100, Math.max(1, summed))) - rated.logicalScore) < 1e-9, label + " 邏輯指標加權結果不一致");
+  assert(rated.reasoning.complete, label + " 假設深度未驗證");
+  assert(Number.isInteger(rated.assumptionDepth), label + " 缺少假設深度");
   assert(Array.isArray(rated.techniques), label + " 缺少技巧列表");
   assert(rated.logicSteps >= 0, label + " 推理步數不合法");
 }
