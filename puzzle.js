@@ -517,6 +517,29 @@
     { n: 8, label: "進階", from: 651, to: 820 },
     { n: 9, label: "專家", from: 821, to: 999 },
   ];
+  // Outside the 999-level campaign. Clearing one does not change campaign progress.
+  var TEST_LEVEL_BASE = 1000;
+  var TEST_SHAPES = [
+    "001122233/011222233/000223333/440555336/440445636/744444666/777774468/777777468/777777788",
+  ];
+
+  function testLevelCount() {
+    return TEST_SHAPES.length;
+  }
+
+  function isTestLevel(level) {
+    level = level | 0;
+    return level > TEST_LEVEL_BASE && level <= TEST_LEVEL_BASE + TEST_SHAPES.length;
+  }
+
+  function testChapter() {
+    return {
+      label: "測試",
+      test: true,
+      from: TEST_LEVEL_BASE + 1,
+      to: TEST_LEVEL_BASE + TEST_SHAPES.length,
+    };
+  }
 
   function createRng(seed) {
     var a = seed >>> 0;
@@ -536,6 +559,18 @@
   }
 
   function levelSpec(level) {
+    if (isTestLevel(level)) {
+      var compact = TEST_SHAPES[level - TEST_LEVEL_BASE - 1];
+      return {
+        level: level,
+        n: compact.split("/")[0].length,
+        label: "測試",
+        from: TEST_LEVEL_BASE + 1,
+        to: TEST_LEVEL_BASE + TEST_SHAPES.length,
+        progress: 0,
+        test: true,
+      };
+    }
     level = Math.max(1, Math.min(TOTAL_LEVELS, level | 0));
     var chapter = CHAPTERS[CHAPTERS.length - 1];
     for (var i = 0; i < CHAPTERS.length; i++) {
@@ -1413,7 +1448,29 @@
     throw new Error("關卡形狀庫缺少第 " + level + " 關");
   }
 
+  function generateTestLevel(level) {
+    if (!isTestLevel(level)) throw new Error("不是測試關：" + level);
+    if (playCache[level]) return playCache[level];
+    var compact = TEST_SHAPES[level - TEST_LEVEL_BASE - 1];
+    var regions = expandCompactShape(compact).split("/").map(function (row) {
+      return row.split(",").map(Number);
+    });
+    var stars = findSolution(regions);
+    if (!stars) throw new Error("測試關沒有解：" + level);
+    var puzzle = attachRating({
+      n: regions.length,
+      level: level,
+      regions: regions,
+      stars: stars,
+      palette: makePalette(regions.length, createRng(levelSeed(level, 0))),
+      test: true,
+    });
+    playCache[level] = puzzle;
+    return puzzle;
+  }
+
   function generateLevel(campaignLevel) {
+    if (isTestLevel(campaignLevel)) return generateTestLevel(campaignLevel);
     campaignLevel = Math.max(1, Math.min(TOTAL_LEVELS, campaignLevel | 0));
     if (playCache[campaignLevel]) return playCache[campaignLevel];
     var source = campaignSource(campaignLevel);
@@ -1470,6 +1527,11 @@
     regionCells: regionCells,
     TOTAL_LEVELS: TOTAL_LEVELS,
     CHAPTERS: CHAPTERS,
+    TEST_LEVEL_BASE: TEST_LEVEL_BASE,
+    TEST_SHAPES: TEST_SHAPES,
+    testLevelCount: testLevelCount,
+    isTestLevel: isTestLevel,
+    testChapter: testChapter,
     levelSpec: levelSpec,
     generateLevel: generateLevel,
     generateSourceLevel: generateSourceLevel,

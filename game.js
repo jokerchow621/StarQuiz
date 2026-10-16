@@ -96,7 +96,7 @@
   }
 
   function defaultSave() {
-    return { v: 1, lastLevel: 1, clearedUpTo: 0, draft: null };
+    return { v: 1, lastLevel: 1, clearedUpTo: 0, draft: null, testCleared: [] };
   }
 
   function loadSave() {
@@ -105,8 +105,19 @@
       if (!raw) return defaultSave();
       var data = JSON.parse(raw);
       if (!data || data.v !== 1) return defaultSave();
-      data.lastLevel = Math.max(1, Math.min(totalLevels(), data.lastLevel | 0));
+      var storedLevel = data.lastLevel | 0;
+      data.lastLevel = storedLevel >= 1 && storedLevel <= totalLevels() ? storedLevel : 1;
       data.clearedUpTo = Math.max(0, Math.min(totalLevels(), data.clearedUpTo | 0));
+      var lib = puzzleLib();
+      data.testCleared = Array.isArray(data.testCleared)
+        ? data.testCleared
+            .map(function (n) {
+              return n | 0;
+            })
+            .filter(function (n) {
+              return lib && lib.isTestLevel(n);
+            })
+        : [];
       return data;
     } catch (err) {
       return defaultSave();
@@ -129,8 +140,21 @@
     return level <= (state.save.clearedUpTo || 0);
   }
 
+  function isTestCleared(level) {
+    return (state.save.testCleared || []).indexOf(level) >= 0;
+  }
+
   function isUnlocked(level) {
+    var lib = puzzleLib();
+    if (lib && lib.isTestLevel(level)) return true;
     return level <= unlockedLevel();
+  }
+
+  function resumeLevel() {
+    var draftLevel = state.save.draft && state.save.draft.level;
+    var resume = draftLevel && !puzzleLib().isTestLevel(draftLevel) ? draftLevel : state.save.lastLevel;
+    if (!isUnlocked(resume) || puzzleLib().isTestLevel(resume)) resume = unlockedLevel();
+    return resume;
   }
 
   function showScreen(name) {
@@ -174,7 +198,7 @@
 
   function persistDraft(immediate) {
     if (!state.save || state.status !== "playing" || !state.puzzle) return;
-    state.save.lastLevel = state.level;
+    if (!puzzleLib().isTestLevel(state.level)) state.save.lastLevel = state.level;
     state.save.draft = {
       level: state.level,
       boardKey: puzzleLib().puzzleKey(state.puzzle),
@@ -211,8 +235,7 @@
     var cleared = state.save.clearedUpTo || 0;
     var total = totalLevels();
     var next = unlockedLevel();
-    var resume = state.save.draft && state.save.draft.level ? state.save.draft.level : state.save.lastLevel;
-    if (!isUnlocked(resume)) resume = next;
+    var resume = resumeLevel();
     els.progressCount.textContent = cleared + " / " + total;
     els.progressFill.style.width = (cleared / total) * 100 + "%";
     els.continueBtn.textContent = cleared >= total ? "重溫第 " + resume + " 關" : "繼續第 " + resume + " 關";
@@ -227,16 +250,23 @@
     };
   }
 
+  function catalogChapters() {
+    var lib = puzzleLib();
+    var chapters = lib.CHAPTERS.slice();
+    if (lib.testLevelCount && lib.testLevelCount()) chapters.push(lib.testChapter());
+    return chapters;
+  }
+
   function renderCatalog() {
     var lib = puzzleLib();
-    var chapters = lib.CHAPTERS;
+    var chapters = catalogChapters();
     var chapter = chapters[state.catalogChapter] || chapters[0];
     els.chapterTabs.innerHTML = "";
     chapters.forEach(function (ch, idx) {
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "chapter-tab" + (idx === state.catalogChapter ? " is-active" : "");
-      btn.textContent = ch.label + " " + ch.n + "×" + ch.n;
+      btn.textContent = ch.test ? ch.label : ch.label + " " + ch.n + "×" + ch.n;
       btn.addEventListener("click", function () {
         state.catalogChapter = idx;
         state.catalogPage = 0;
@@ -250,18 +280,21 @@
     if (state.catalogPage > pages - 1) state.catalogPage = pages - 1;
     var start = chapter.from + state.catalogPage * PAGE_SIZE;
     var end = Math.min(chapter.to, start + PAGE_SIZE - 1);
+    var labelOf = function (n) {
+      return chapter.test ? n - lib.TEST_LEVEL_BASE : n;
+    };
     els.levelGrid.innerHTML = "";
     for (var lv = start; lv <= end; lv++) {
       var cell = document.createElement("button");
       cell.type = "button";
       cell.className = "level-cell";
-      if (isCleared(lv)) cell.classList.add("is-cleared");
-      if (lv === state.save.lastLevel) cell.classList.add("is-current");
+      if (chapter.test ? isTestCleared(lv) : isCleared(lv)) cell.classList.add("is-cleared");
+      if (!chapter.test && lv === state.save.lastLevel) cell.classList.add("is-current");
       if (!isUnlocked(lv)) {
         cell.classList.add("is-locked");
         cell.disabled = true;
       }
-      cell.textContent = String(lv);
+      cell.textContent = String(labelOf(lv));
       cell.addEventListener("click", function (level) {
         return function () {
           els.levelsOverlay.hidden = true;
@@ -270,7 +303,8 @@
       }(lv));
       els.levelGrid.appendChild(cell);
     }
-    els.levelPage.textContent = start + "–" + end + " / " + chapter.from + "–" + chapter.to;
+    els.levelPage.textContent =
+      labelOf(start) + "–" + labelOf(end) + " / " + labelOf(chapter.from) + "–" + labelOf(chapter.to);
     document.getElementById("level-prev").disabled = state.catalogPage <= 0;
     document.getElementById("level-next").disabled = state.catalogPage >= pages - 1;
   }
@@ -533,7 +567,7 @@
     state.status = "lost";
     flashWrong(r, c);
     state.save.draft = null;
-    state.save.lastLevel = state.level;
+    if (!puzzleLib().isTestLevel(state.level)) state.save.lastLevel = state.level;
     writeSave();
     setTimeout(function () {
       startLevel(state.level, true);
@@ -807,7 +841,7 @@
       renderBoard();
       els.resultDialog.classList.add("is-lose");
       state.save.draft = null;
-      state.save.lastLevel = state.level;
+      if (!puzzleLib().isTestLevel(state.level)) state.save.lastLevel = state.level;
       writeSave();
       els.resultKicker.textContent = "機會用盡";
       els.resultTitle.textContent = "這關先到這裡";
@@ -815,6 +849,24 @@
       els.resultNext.textContent = "再試本關";
       els.resultOverlay.hidden = false;
       renderLobby();
+      return;
+    }
+    if (puzzleLib().isTestLevel(state.level)) {
+      var clearedTests = state.save.testCleared || [];
+      if (clearedTests.indexOf(state.level) < 0) clearedTests.push(state.level);
+      state.save.testCleared = clearedTests;
+      state.save.draft = null;
+      writeSave();
+      renderLobby();
+      playWinShowcase(function () {
+        if (state.status !== "won") return;
+        var nextTest = state.level + 1;
+        if (puzzleLib().isTestLevel(nextTest)) {
+          startLevel(nextTest, true);
+          return;
+        }
+        showTestWinOverlay();
+      });
       return;
     }
     state.save.clearedUpTo = Math.max(state.save.clearedUpTo || 0, state.level);
@@ -830,6 +882,16 @@
       }
       startLevel(state.level + 1, true);
     });
+  }
+
+  function showTestWinOverlay() {
+    els.resultDialog.classList.remove("is-lose");
+    var spec = puzzleLib().levelSpec(state.level);
+    els.resultKicker.textContent = spec.label + " " + (state.level - puzzleLib().TEST_LEVEL_BASE) + " 通過";
+    els.resultTitle.textContent = "這題測完了";
+    els.resultCopy.textContent = "用時 " + formatTime(state.elapsed) + "。測試關不計入征途進度。";
+    els.resultNext.textContent = "返回選單";
+    els.resultOverlay.hidden = false;
   }
 
   function emptyMarks(n) {
@@ -940,12 +1002,17 @@
     els.board.classList.remove("is-showcase");
     var lib = puzzleLib();
     if (!lib || typeof lib.generateLevel !== "function") return;
-    level = Math.max(1, Math.min(totalLevels(), level | 0));
-    if (!isUnlocked(level)) level = unlockedLevel();
+    var testing = lib.isTestLevel(level);
+    if (!testing) {
+      level = Math.max(1, Math.min(totalLevels(), level | 0));
+      if (!isUnlocked(level)) level = unlockedLevel();
+      state.save.lastLevel = level;
+    }
     state.level = level;
-    state.save.lastLevel = level;
     var spec = lib.levelSpec(level);
-    els.difficultyLabel.textContent = "第 " + level + " 關 · " + spec.label + " " + spec.n + "×" + spec.n;
+    els.difficultyLabel.textContent = testing
+      ? spec.label + " " + (level - lib.TEST_LEVEL_BASE) + " · " + spec.n + "×" + spec.n
+      : "第 " + level + " 關 · " + spec.label + " " + spec.n + "×" + spec.n;
     showScreen("play");
     els.board.innerHTML = "";
     var draft =
@@ -1029,6 +1096,19 @@
   document.getElementById("result-next").addEventListener("click", function () {
     els.resultOverlay.hidden = true;
     if (state.status === "won") {
+      var lib = puzzleLib();
+      var nextTest = state.level + 1;
+      if (lib.isTestLevel(state.level)) {
+        if (lib.isTestLevel(nextTest)) {
+          startLevel(nextTest, true);
+          return;
+        }
+        stopTimer();
+        state.status = "idle";
+        showScreen("lobby");
+        renderLobby();
+        return;
+      }
       if (state.level >= totalLevels()) {
         stopTimer();
         state.status = "idle";

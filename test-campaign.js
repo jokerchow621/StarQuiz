@@ -125,4 +125,19 @@ for (let lv = 675; lv <= 692; lv++) {
   assert(Puzzle.countSolutions(p.regions, 3) === 1, "675-692 必須唯一解: " + lv);
 }
 
+assert(Puzzle.testLevelCount() === 1, "目前應有 1 題測試關");
+assert(Puzzle.isTestLevel(1001) && !Puzzle.isTestLevel(999) && !Puzzle.isTestLevel(1002), "測試關編號在征途之外");
+assert(Puzzle.CHAPTERS.length === 6 && Puzzle.CHAPTERS.every(function (ch) { return !ch.test; }), "測試關不屬於征途章節");
+const testPuzzle = Puzzle.generateLevel(1001);
+assert(testPuzzle.n === 9, "測試關應為 9×9");
+assert(Puzzle.levelSpec(1001).test && Puzzle.levelSpec(1001).label === "測試", "測試關規格");
+assert(Puzzle.validateRegions(testPuzzle.regions, testPuzzle.stars), "測試關色塊不合法");
+assert(Puzzle.starsAreLegal(testPuzzle.stars), "測試關星星不合法");
+assert(Puzzle.countSolutions(testPuzzle.regions, 2) === 1, "測試關必須唯一解");
+assert(testPuzzle.rating.assumptionDepth === 0, "這題測試關在現行模型為零層");
+const testShape = Puzzle.compactShapeKey(Puzzle.canonicalShapeKey(testPuzzle.regions));
+assert(Puzzle.SHAPE_BANK_COMPACT.indexOf(testShape) < 0, "測試關不應混入征途形狀庫");
+assert(Puzzle.generateLevel(1).level === 1 && Puzzle.generateLevel(999).level === 999, "征途編號不受測試關影響");
+console.log("test level", 1001, testPuzzle.n + "x" + testPuzzle.n, testPuzzle.difficulty);
+
 console.log("all passed");
