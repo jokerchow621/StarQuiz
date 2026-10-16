@@ -125,11 +125,11 @@ for (let lv = 675; lv <= 692; lv++) {
   assert(Puzzle.countSolutions(p.regions, 3) === 1, "675-692 必須唯一解: " + lv);
 }
 
-assert(Puzzle.testLevelCount() === 2, "目前應有 2 題測試關");
-assert(Puzzle.isTestLevel(1001) && Puzzle.isTestLevel(1002) && !Puzzle.isTestLevel(999) && !Puzzle.isTestLevel(1003), "測試關編號在征途之外");
+assert(Puzzle.testLevelCount() === 3, "目前應有 3 題測試關");
+assert(Puzzle.isTestLevel(1001) && Puzzle.isTestLevel(1003) && !Puzzle.isTestLevel(999) && !Puzzle.isTestLevel(1004), "測試關編號在征途之外");
 assert(Puzzle.CHAPTERS.length === 6 && Puzzle.CHAPTERS.every(function (ch) { return !ch.test; }), "測試關不屬於征途章節");
 const seenTestShapes = {};
-for (let lv = 1001; lv <= 1002; lv++) {
+for (let lv = 1001; lv <= 1000 + Puzzle.testLevelCount(); lv++) {
   const testPuzzle = Puzzle.generateLevel(lv);
   assert(testPuzzle.n === 9, "測試關應為 9×9: " + lv);
   assert(Puzzle.levelSpec(lv).test && Puzzle.levelSpec(lv).label === "測試", "測試關規格: " + lv);
