@@ -56,6 +56,19 @@
     chapterTabs: document.getElementById("chapter-tabs"),
     levelGrid: document.getElementById("level-grid"),
     levelPage: document.getElementById("level-page"),
+    design: document.getElementById("design"),
+    designBoard: document.getElementById("design-board"),
+    designPalette: document.getElementById("design-palette"),
+    designReasons: document.getElementById("design-reasons"),
+    designReasonTitle: document.getElementById("design-reason-title"),
+    designReasonList: document.getElementById("design-reason-list"),
+    designHint: document.getElementById("design-hint"),
+    designSubmit: document.getElementById("design-submit"),
+    designRegen: document.getElementById("design-regen"),
+    designRestart: document.getElementById("design-restart"),
+    designScore: document.getElementById("design-score"),
+    designScoreAnchor: document.getElementById("design-score-anchor"),
+    designApply: document.getElementById("design-apply-hint"),
   };
 
   var state = {
@@ -83,6 +96,21 @@
     catalogPage: 0,
     showcaseTimer: null,
     scoreAnimId: null,
+  };
+
+  var DESIGN_BLANK_STARS = [0, 2, 4, 6, 8, 1, 3, 5, 7];
+  var design = {
+    stars: null,
+    colors: null,
+    brush: 0,
+    painting: false,
+    locked: false,
+    judging: false,
+    scoreTimer: null,
+    scoreDocked: false,
+    alt: null,
+    hintCells: [],
+    hintColor: -1,
   };
 
   function puzzleLib() {
@@ -160,6 +188,7 @@
   function showScreen(name) {
     els.lobby.dataset.visible = name === "lobby" ? "true" : "false";
     els.play.dataset.visible = name === "play" ? "true" : "false";
+    if (els.design) els.design.dataset.visible = name === "design" ? "true" : "false";
   }
 
   function formatTime(ms) {
@@ -313,6 +342,10 @@
 
   function starSvg() {
     return '<svg class="mark mark-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.55 6.08 6.6.58-5.03 4.28 1.55 6.44L12 17.7 6.33 20.58 7.88 14.14 2.85 9.86l6.6-.58z"/></svg>';
+  }
+
+  function altStarSvg() {
+    return '<svg class="mark mark-alt" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.55 6.08 6.6.58-5.03 4.28 1.55 6.44L12 17.7 6.33 20.58 7.88 14.14 2.85 9.86l6.6-.58z"/></svg>';
   }
 
   function crossSvg() {
@@ -1045,6 +1078,348 @@
     }
   }
 
+  function emptyDesignColors() {
+    return Array.from({ length: 9 }, function () {
+      return Array(9).fill(-1);
+    });
+  }
+
+  function rollDesignStars(previous) {
+    var lib = puzzleLib();
+    var prevKey = previous ? previous.join(",") : "";
+    var stars = null;
+    for (var i = 0; i < 80; i++) {
+      stars = lib.generateStarPlacement(9);
+      if (stars && lib.starsAreLegal(stars) && stars.join(",") !== prevKey) return stars.slice();
+    }
+    return DESIGN_BLANK_STARS.slice();
+  }
+
+  function cancelDesignScore() {
+    if (design.scoreTimer) {
+      clearTimeout(design.scoreTimer);
+      design.scoreTimer = null;
+    }
+    design.scoreDocked = false;
+    if (!els.designScore) return;
+    els.designScore.hidden = true;
+    els.designScore.className = "design-score";
+    els.designScore.style.cssText = "";
+    els.designScore.textContent = "";
+    els.designScore.removeAttribute("aria-label");
+  }
+
+  function clearDesignNote() {
+    if (!els.designReasons) return;
+    els.designReasons.hidden = true;
+    els.designReasons.classList.remove("is-wait");
+    els.designReasonList.innerHTML = "";
+  }
+
+  function showDesignNote(title, lines, waiting) {
+    els.designReasons.hidden = false;
+    els.designReasons.classList.toggle("is-wait", !!waiting);
+    els.designReasonTitle.textContent = title;
+    els.designReasonList.innerHTML = "";
+    lines.forEach(function (line) {
+      var item = document.createElement("li");
+      item.textContent = line;
+      els.designReasonList.appendChild(item);
+    });
+  }
+
+  function designEdgeClass(r, c) {
+    var id = design.colors[r][c];
+    if (id < 0) return "";
+    var cls = "";
+    var specs = [
+      ["edge-t", r - 1, c],
+      ["edge-b", r + 1, c],
+      ["edge-l", r, c - 1],
+      ["edge-r", r, c + 1],
+    ];
+    for (var i = 0; i < specs.length; i++) {
+      var nr = specs[i][1];
+      var nc = specs[i][2];
+      if (nr < 0 || nc < 0 || nr >= 9 || nc >= 9 || design.colors[nr][nc] !== id) cls += " " + specs[i][0];
+    }
+    return cls;
+  }
+
+  function designHintAt(r, c) {
+    var cells = design.hintCells;
+    if (!cells) return false;
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i][0] === r && cells[i][1] === c) return true;
+    }
+    return false;
+  }
+
+  function clearDesignHint() {
+    design.alt = null;
+    design.hintCells = [];
+    design.hintColor = -1;
+    if (els.designApply) els.designApply.hidden = true;
+  }
+
+  function syncDesignCell(r, c) {
+    var btn = els.designBoard.querySelector('[data-r="' + r + '"][data-c="' + c + '"]');
+    if (!btn) return;
+    var id = design.colors[r][c];
+    var star = design.stars[r] === c;
+    var alt = !!(design.alt && design.alt[r] === c && !star);
+    var hinted = designHintAt(r, c);
+    var names = puzzleLib().designColorNames || [];
+    btn.className =
+      "cell" +
+      (star ? " is-given-star" : "") +
+      (alt ? " is-alt-star" : "") +
+      (hinted ? " is-design-hint" : "") +
+      designEdgeClass(r, c);
+    btn.style.background = id < 0 ? "" : COLORS[id % COLORS.length];
+    var label = r + 1 + " 列 " + (c + 1) + " 行，" + (id < 0 ? "未上色" : (names[id] || "") + "色");
+    if (star) label += "，有星星";
+    if (alt) label += "，另一種擺法";
+    if (hinted) label += "，建議改成" + ((names[design.hintColor] || "") + "色");
+    btn.setAttribute("aria-label", label);
+    if (star) btn.innerHTML = starSvg();
+    else if (alt) btn.innerHTML = altStarSvg();
+    else btn.innerHTML = "";
+  }
+
+  function renderDesignBoard() {
+    var board = els.designBoard;
+    board.style.gridTemplateColumns = "repeat(9, minmax(0, 1fr))";
+    board.innerHTML = "";
+    for (var r = 0; r < 9; r++) {
+      for (var c = 0; c < 9; c++) {
+        var btn = document.createElement("div");
+        btn.dataset.r = String(r);
+        btn.dataset.c = String(c);
+        btn.setAttribute("role", "gridcell");
+        board.appendChild(btn);
+        syncDesignCell(r, c);
+      }
+    }
+  }
+
+  function paintDesign(r, c) {
+    if (design.locked || design.judging) return;
+    if (r < 0 || c < 0 || r >= 9 || c >= 9) return;
+    if (design.colors[r][c] === design.brush) return;
+    design.colors[r][c] = design.brush;
+    syncDesignCell(r, c);
+    syncDesignCell(r - 1, c);
+    syncDesignCell(r + 1, c);
+    syncDesignCell(r, c - 1);
+    syncDesignCell(r, c + 1);
+  }
+
+  function ensureDesignPalette() {
+    if (els.designPalette.childElementCount) {
+      updateDesignBrush();
+      return;
+    }
+    var names = puzzleLib().designColorNames || [];
+    COLORS.forEach(function (color, index) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "swatch";
+      btn.style.background = color;
+      btn.setAttribute("role", "radio");
+      btn.setAttribute("aria-label", (names[index] || "顏色 " + (index + 1)) + "色");
+      btn.addEventListener("click", function () {
+        if (design.locked || design.judging) return;
+        design.brush = index;
+        updateDesignBrush();
+      });
+      els.designPalette.appendChild(btn);
+    });
+    updateDesignBrush();
+  }
+
+  function updateDesignBrush() {
+    var swatches = els.designPalette.querySelectorAll(".swatch");
+    for (var i = 0; i < swatches.length; i++) {
+      var on = i === design.brush;
+      swatches[i].classList.toggle("is-selected", on);
+      swatches[i].setAttribute("aria-checked", on ? "true" : "false");
+    }
+  }
+
+  function setDesignBusy(busy) {
+    design.judging = busy;
+    var frozen = busy || design.locked;
+    els.designRegen.disabled = busy;
+    els.designRestart.disabled = busy;
+    if (els.designApply) els.designApply.disabled = busy;
+    els.designSubmit.disabled = frozen;
+    els.designSubmit.textContent = busy ? "判定中…" : "送交";
+    els.designPalette.classList.toggle("is-locked", frozen);
+    els.designBoard.classList.toggle("is-locked", frozen);
+  }
+
+  function beginDesign(newStars) {
+    cancelDesignScore();
+    design.locked = false;
+    design.judging = false;
+    design.painting = false;
+    if (newStars || !design.stars) design.stars = rollDesignStars(newStars ? design.stars : null);
+    design.colors = emptyDesignColors();
+    clearDesignHint();
+    setDesignBusy(false);
+    clearDesignNote();
+    els.designHint.textContent = "選一種顏色，點格子或拖曳上色。星星是系統給的。";
+    ensureDesignPalette();
+    renderDesignBoard();
+    showScreen("design");
+  }
+
+  function leaveDesign() {
+    cancelDesignScore();
+    design.painting = false;
+    design.locked = false;
+    design.judging = false;
+    showScreen("lobby");
+    renderLobby();
+  }
+
+  function placeDesignScore(el, point, size, animate) {
+    if (!animate) el.style.transition = "none";
+    el.style.left = point.x + "px";
+    el.style.top = point.y + "px";
+    el.style.transform = "translate(-50%, -50%)";
+    if (size) el.style.fontSize = size;
+    if (!animate) {
+      void el.offsetWidth;
+      el.style.transition = "";
+    }
+  }
+
+  function designScorePoint() {
+    var rect = els.designScoreAnchor.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+
+  function designScoreDockSize() {
+    return window.innerWidth < 640 ? "28px" : "40px";
+  }
+
+  function flyDesignScore() {
+    var el = els.designScore;
+    var size = window.getComputedStyle(el).fontSize;
+    el.className = "design-score is-dock";
+    placeDesignScore(el, { x: window.innerWidth / 2, y: window.innerHeight / 2 }, size, false);
+    requestAnimationFrame(function () {
+      placeDesignScore(el, designScorePoint(), designScoreDockSize(), true);
+      design.scoreDocked = true;
+    });
+  }
+
+  function presentDesignScore(score) {
+    cancelDesignScore();
+    var el = els.designScore;
+    el.hidden = false;
+    el.textContent = String(score);
+    el.setAttribute("aria-label", "難度分數 " + score);
+    el.className = "design-score is-pop";
+    placeDesignScore(el, { x: window.innerWidth / 2, y: window.innerHeight / 2 }, "", true);
+    design.scoreTimer = setTimeout(function () {
+      design.scoreTimer = null;
+      flyDesignScore();
+    }, 880);
+  }
+
+  function submitDesign() {
+    if (design.locked || design.judging || !design.colors || !design.stars) return;
+    var lib = puzzleLib();
+    setDesignBusy(true);
+    showDesignNote("判定中", ["正在檢查成題條件。"], true);
+    setTimeout(function () {
+      var report;
+      try {
+        report = lib.explainDesign(design.colors, design.stars);
+      } catch (err) {
+        setDesignBusy(false);
+        showDesignNote("不成題", ["檢查時發生問題，請再送交一次。"], false);
+        return;
+      }
+      if (!report.ok) {
+        design.alt = report.alt || null;
+        design.hintCells = report.hint && report.hint.cells ? report.hint.cells : [];
+        design.hintColor = report.hint ? report.hint.colorId : -1;
+        setDesignBusy(false);
+        showDesignNote("不成題", report.reasons, false);
+        if (els.designApply) els.designApply.hidden = !design.hintCells.length;
+        renderDesignBoard();
+        if (design.alt) {
+          els.designHint.textContent = "空心星是另一種擺法。把虛線格子改成同一色，這個擺法就會消失。";
+        }
+        return;
+      }
+      showDesignNote("判定中", ["成題了，正在計算難度。"], true);
+      setTimeout(function () {
+        var rated;
+        try {
+          rated = lib.scoreDifficulty(design.colors, design.stars);
+        } catch (err) {
+          setDesignBusy(false);
+          showDesignNote("無法評分", ["這盤符合成題條件，但這次沒能算出難度分數。"], false);
+          return;
+        }
+        design.locked = true;
+        clearDesignHint();
+        setDesignBusy(false);
+        clearDesignNote();
+        els.designHint.textContent = "難度分數會留在盤面右上角，可以截圖。重新設計會保留這組星星。";
+        presentDesignScore(rated.score);
+      }, 30);
+    }, 30);
+  }
+
+  document.getElementById("open-design").addEventListener("click", function () {
+    beginDesign(true);
+  });
+  document.getElementById("design-back").addEventListener("click", leaveDesign);
+  els.designRegen.addEventListener("click", function () {
+    if (design.judging) return;
+    beginDesign(true);
+  });
+  els.designRestart.addEventListener("click", function () {
+    if (design.judging) return;
+    beginDesign(false);
+  });
+  function applyDesignHint() {
+    if (design.locked || design.judging || !design.hintCells.length) return;
+    for (var i = 0; i < design.hintCells.length; i++) {
+      design.colors[design.hintCells[i][0]][design.hintCells[i][1]] = design.hintColor;
+    }
+    clearDesignHint();
+    renderDesignBoard();
+    showDesignNote("已照提示改色", ["這個擺法已經拆掉。再送交一次；若還有別的擺法，會再標出下一組空心星。"], true);
+    els.designHint.textContent = "改完再送交。還有別的擺法時，會再標出下一組空心星。";
+  }
+
+  els.designSubmit.addEventListener("click", submitDesign);
+  els.designApply.addEventListener("click", applyDesignHint);
+  els.designBoard.addEventListener("pointerdown", function (e) {
+    if (design.locked || design.judging) return;
+    var cell = e.target.closest ? e.target.closest(".cell") : null;
+    if (!cell || !els.designBoard.contains(cell)) return;
+    design.painting = true;
+    e.preventDefault();
+    paintDesign(Number(cell.dataset.r), Number(cell.dataset.c));
+  });
+  els.designBoard.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+  });
+  function stickDesignScore() {
+    if (!design.scoreDocked || !els.designScore) return;
+    placeDesignScore(els.designScore, designScorePoint(), designScoreDockSize(), false);
+  }
+  window.addEventListener("resize", stickDesignScore);
+  document.addEventListener("scroll", stickDesignScore, true);
+
   document.getElementById("open-rules").addEventListener("click", openRules);
   document.getElementById("play-rules").addEventListener("click", openRules);
   document.getElementById("close-rules").addEventListener("click", closeRules);
@@ -1163,6 +1538,13 @@
     e.preventDefault();
   });
   document.addEventListener("pointermove", function (e) {
+    if (design.painting) {
+      var painted = document.elementFromPoint(e.clientX, e.clientY);
+      var designCell = painted && painted.closest ? painted.closest(".cell") : null;
+      if (designCell && els.designBoard.contains(designCell)) {
+        paintDesign(Number(designCell.dataset.r), Number(designCell.dataset.c));
+      }
+    }
     if (!state.crossPaint) return;
     var last = state.lastTouchTap;
     if (last) {
@@ -1174,9 +1556,18 @@
     }
     paintCrossAtPoint(e.clientX, e.clientY);
   });
-  document.addEventListener("pointerup", endCrossPaint);
-  document.addEventListener("pointercancel", endCrossPaint);
-  window.addEventListener("blur", endCrossPaint);
+  document.addEventListener("pointerup", function () {
+    design.painting = false;
+    endCrossPaint();
+  });
+  document.addEventListener("pointercancel", function () {
+    design.painting = false;
+    endCrossPaint();
+  });
+  window.addEventListener("blur", function () {
+    design.painting = false;
+    endCrossPaint();
+  });
   els.board.addEventListener("contextmenu", function (e) {
     e.preventDefault();
   });

@@ -524,6 +524,7 @@
     "000011122/000011122/000011332/011001444/001111114/001556144/001656644/706656644/008666444",
     "000000000/011122220/011111222/011133242/055543344/005544444/066557774/066855777/088855777",
     "011111233/111211232/412222222/442225222/422226222/444426666/447776776/444477776/444887776",
+    "666888888/666667888/655577888/657778888/455752881/455552281/443333381/003333381/088888881",
   ];
 
   function testLevelCount() {
@@ -1460,12 +1461,15 @@
     });
     var stars = findSolution(regions);
     if (!stars) throw new Error("測試關沒有解：" + level);
+    var keepShotColors = compact.indexOf("666888888/") === 0;
     var puzzle = attachRating({
       n: regions.length,
       level: level,
       regions: regions,
       stars: stars,
-      palette: makePalette(regions.length, createRng(levelSeed(level, 0))),
+      palette: keepShotColors
+        ? Array.from({ length: regions.length }, function (_, i) { return i; })
+        : makePalette(regions.length, createRng(levelSeed(level, 0))),
       test: true,
     });
     playCache[level] = puzzle;
@@ -1489,6 +1493,147 @@
     };
     playCache[campaignLevel] = out;
     return out;
+  }
+
+  var DESIGN_COLOR_NAMES = ["粉紅", "藍", "黃", "綠", "紫", "橙", "青", "紅", "靛"];
+
+  function designColorLabel(id) {
+    return (DESIGN_COLOR_NAMES[id] || "第 " + (id + 1)) + "色";
+  }
+
+  function explainDesign(regions, stars) {
+    var reasons = [];
+    if (!regions || !regions.length || !stars) {
+      return { ok: false, reasons: ["沒有可判定的盤面。"] };
+    }
+    var n = regions.length;
+    if (n !== 9 || stars.length !== n) {
+      return { ok: false, reasons: ["設計盤面必須是九乘九，並給定九顆星。"] };
+    }
+    for (var r = 0; r < n; r++) {
+      if (!regions[r] || regions[r].length !== n) {
+        return { ok: false, reasons: ["盤面格子不完整。"] };
+      }
+    }
+
+    var uncolored = 0;
+    var counts = [];
+    var badColor = false;
+    for (var i = 0; i < n; i++) counts[i] = 0;
+    for (r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        var id = regions[r][c];
+        if (id == null || id < 0) uncolored++;
+        else if (id !== (id | 0) || id >= n) badColor = true;
+        else counts[id]++;
+      }
+    }
+    if (uncolored) reasons.push("還有 " + uncolored + " 格沒有上色。");
+    if (badColor) reasons.push("出現了九種以外的顏色。");
+    var missing = [];
+    for (i = 0; i < n; i++) {
+      if (!counts[i]) missing.push(designColorLabel(i));
+    }
+    if (missing.length) reasons.push("還沒用到這些顏色：" + missing.join("、") + "。");
+
+    for (i = 0; i < n; i++) {
+      if (!counts[i]) continue;
+      var cells = [];
+      var starCount = 0;
+      for (r = 0; r < n; r++) {
+        for (c = 0; c < n; c++) {
+          if (regions[r][c] !== i) continue;
+          cells.push([r, c]);
+          if (stars[r] === c) starCount++;
+        }
+      }
+      var label = designColorLabel(i);
+      if (!isConnected(cells)) reasons.push(label + "沒有連成一塊。");
+      if (starCount === 0) reasons.push(label + "裡沒有星星。");
+      else if (starCount > 1) reasons.push(label + "裡有 " + starCount + " 顆星星，每一色只能有一顆。");
+    }
+
+    if (!reasons.length) {
+      if (!starsAreLegal(stars)) reasons.push("盤面上的星星違反直列或相鄰限制。");
+      else if (!validateRegions(regions, stars)) reasons.push("色塊還沒有構成連通、且每色一星的區域。");
+      else {
+        var hint = suggestDesignHint(regions, stars);
+        if (hint) {
+          reasons.push("星星的擺法不只一種，還不是唯一解。空心星是另一種擺法。");
+          if (hint.cells.length) {
+            reasons.push(
+              "虛線格子改成" + designColorLabel(hint.colorId) + "，這個擺法就會消失。可按「照提示上色」一次改完，再送交看下一個。"
+            );
+          } else {
+            reasons.push("讓其中兩顆空心星落在同一色，並維持每一色相連、且各有一顆實心星。");
+          }
+          return { ok: false, reasons: reasons, alt: hint.alt, hint: hint };
+        }
+      }
+    }
+    return { ok: reasons.length === 0, reasons: reasons, alt: null, hint: null };
+  }
+
+  function placementFits(regions, stars) {
+    var n = regions.length;
+    if (!stars || stars.length !== n) return false;
+    var used = {};
+    for (var r = 0; r < n; r++) {
+      var c = stars[r];
+      if (c < 0 || c >= n || !regions[r]) return false;
+      var id = regions[r][c];
+      if (id == null || id < 0 || id >= n || used[id]) return false;
+      used[id] = true;
+    }
+    return true;
+  }
+
+  function suggestDesignHint(regions, stars) {
+    var alt = findAnotherSolution(regions, stars);
+    if (!alt) return null;
+    var n = stars.length;
+    var diffs = [];
+    for (var r = 0; r < n; r++) {
+      if (alt[r] !== stars[r]) diffs.push(r);
+    }
+    var best = null;
+    var rng = function () {
+      return 0;
+    };
+    for (var i = 0; i < diffs.length; i++) {
+      for (var j = i + 1; j < diffs.length; j++) {
+        var r1 = diffs[i];
+        var r2 = diffs[j];
+        var targets = [regions[r1][stars[r1]], regions[r2][stars[r2]]];
+        for (var t = 0; t < targets.length; t++) {
+          var targetId = targets[t];
+          if (targetId == null || targetId < 0) continue;
+          var blocked = starBlockSet(stars, targetId, regions);
+          var p1 = pathToRegion(regions, r1, alt[r1], targetId, blocked, rng);
+          var p2 = pathToRegion(regions, r2, alt[r2], targetId, blocked, rng);
+          if (!p1 || !p2 || (!p1.length && !p2.length)) continue;
+          var next = applyPath(applyPath(regions, p1, targetId), p2, targetId);
+          if (!validateRegions(next, stars) || placementFits(next, alt)) continue;
+          var seen = {};
+          var cells = [];
+          var paths = [p1, p2];
+          for (var p = 0; p < paths.length; p++) {
+            for (var k = 0; k < paths[p].length; k++) {
+              var mark = paths[p][k][0] + "," + paths[p][k][1];
+              if (seen[mark]) continue;
+              seen[mark] = true;
+              cells.push([paths[p][k][0], paths[p][k][1]]);
+            }
+          }
+          if (!best || cells.length < best.cells.length) best = { cells: cells, colorId: targetId };
+        }
+      }
+    }
+    return {
+      alt: alt.slice(),
+      cells: best ? best.cells : [],
+      colorId: best ? best.colorId : -1,
+    };
   }
 
   function generatePuzzleAsync(n, onDone) {
@@ -1541,6 +1686,8 @@
     campaignSource: campaignSource,
     CAMPAIGN_SOURCE: CAMPAIGN_SOURCE,
     scoreDifficulty: scoreDifficulty,
+    explainDesign: explainDesign,
+    designColorNames: DESIGN_COLOR_NAMES,
     analyzeReasoning: analyzeReasoning,
     targetDifficulty: targetDifficulty,
     countSingletons: countSingletons,

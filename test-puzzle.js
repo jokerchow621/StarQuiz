@@ -47,4 +47,47 @@ console.log("ok 9x9 x1");
   checkPuzzle(Puzzle.fallbackPuzzle(n));
 });
 console.log("ok fallbacks");
+
+(function () {
+  const stars = [0, 2, 4, 6, 8, 1, 3, 5, 7];
+  const blank = Array.from({ length: 9 }, () => Array(9).fill(-1));
+  const blankReport = Puzzle.explainDesign(blank, stars);
+  assert(!blankReport.ok, "空白盤應不成題");
+  assert(blankReport.reasons.some((line) => line.includes("沒有上色")), "空白盤應說明未上色");
+  assert(blankReport.reasons.some((line) => line.includes("還沒用到")), "空白盤應說明缺色");
+
+  const rows = stars.map((_, r) => Array(9).fill(r));
+  const multi = Puzzle.explainDesign(rows, stars);
+  assert(!multi.ok, "整列同色應不是唯一解");
+  assert(multi.reasons.some((line) => line.includes("唯一解")), "應說明不是唯一解: " + multi.reasons.join(" / "));
+  assert(multi.alt && multi.alt.length === 9, "非唯一解應附上另一種擺法");
+
+  let hinted = null;
+  for (let i = 0; i < 120 && !hinted; i++) {
+    const placed = Puzzle.generateStarPlacement(9);
+    const grown = placed && Puzzle.growRegions(9, placed);
+    if (!grown || !Puzzle.validateRegions(grown, placed)) continue;
+    const report = Puzzle.explainDesign(grown, placed);
+    if (report.hint && report.hint.cells.length) hinted = { grown, placed, report };
+  }
+  assert(hinted, "應找得到可以提示改色的非唯一盤");
+  const patched = hinted.grown.map((row) => row.slice());
+  hinted.report.hint.cells.forEach(([r, c]) => {
+    patched[r][c] = hinted.report.hint.colorId;
+  });
+  assert(Puzzle.validateRegions(patched, hinted.placed), "提示改色後仍應是一區一星");
+  const again = Puzzle.explainDesign(patched, hinted.placed);
+  if (!again.ok) {
+    assert(!again.alt || again.alt.join(",") !== hinted.report.alt.join(","), "提示應拆掉剛才那種擺法");
+  }
+
+  const ready = Puzzle.fallbackPuzzle(9);
+  const regions = ready.regions.map((row) => row.slice());
+  const okReport = Puzzle.explainDesign(regions, ready.stars);
+  assert(okReport.ok, "後備九星題應成題: " + okReport.reasons.join(" / "));
+  regions[0][0] = -1;
+  const hole = Puzzle.explainDesign(regions, ready.stars);
+  assert(!hole.ok && hole.reasons.some((line) => line.includes("沒有上色")), "缺格應說明未上色");
+})();
+console.log("ok design");
 console.log("all passed");

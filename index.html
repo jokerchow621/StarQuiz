@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <link rel="stylesheet" href="styles.css?v=29" />
+    <link rel="stylesheet" href="styles.css?v=31" />
   </head>
   <body>
     <div class="app">
@@ -28,7 +28,7 @@
           </div>
           <p class="eyebrow">StarQuiz</p>
           <h1>星格</h1>
-          <small class="app-version" aria-label="版本 v2026.10.16.4">v2026.10.16.4</small>
+          <small class="app-version" aria-label="版本 v2026.10.17.3">v2026.10.17.3</small>
           <p class="tagline">每個色塊一顆星，行列與鄰格互不侵犯。</p>
         </div>
 
@@ -41,6 +41,7 @@
           </div>
           <button class="solid-btn continue-btn" id="continue-btn" type="button">繼續第 1 關</button>
           <button class="ghost-btn" id="open-levels" type="button">關卡一覽</button>
+          <button class="ghost-btn" id="open-design" type="button">設計模式</button>
           <button class="text-btn" id="open-rules" type="button">遊戲規則</button>
         </div>
       </section>
@@ -59,7 +60,7 @@
 
         <div class="play-board">
           <div class="board-shell">
-            <small class="app-version" aria-label="版本 v2026.10.16.4">v2026.10.16.4</small>
+            <small class="app-version" aria-label="版本 v2026.10.17.3">v2026.10.17.3</small>
             <div class="board-stage">
               <div class="board-loading" id="board-loading" hidden>正在鋪陳星圖…</div>
               <div class="board" id="board" role="grid"></div>
@@ -93,7 +94,49 @@
           </div>
         </footer>
       </section>
+
+      <section class="screen" id="design" data-visible="false">
+        <header class="play-bar">
+          <button class="icon-btn" id="design-back" type="button" aria-label="返回選單">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="play-meta">
+            <p class="play-difficulty" id="design-title">設計模式</p>
+            <p class="design-sub">系統給九顆星，你塗上九種顏色。</p>
+          </div>
+          <span class="play-spacer" aria-hidden="true"></span>
+        </header>
+
+        <div class="design-frame">
+          <div class="design-top">
+            <small class="app-version" aria-label="版本 v2026.10.17.3">v2026.10.17.3</small>
+            <span class="design-score-anchor" id="design-score-anchor" aria-hidden="true"></span>
+          </div>
+          <div class="board-stage" id="design-stage">
+            <div class="board design-board" id="design-board" role="grid" aria-label="設計盤面"></div>
+          </div>
+        </div>
+
+        <div class="design-reasons" id="design-reasons" hidden>
+          <p class="design-reasons-title" id="design-reason-title">不成題</p>
+          <ul id="design-reason-list"></ul>
+          <button class="ghost-btn design-apply" id="design-apply-hint" type="button" hidden>照提示上色</button>
+        </div>
+
+        <div class="design-palette" id="design-palette" role="radiogroup" aria-label="九種顏色"></div>
+
+        <footer class="toolbar">
+          <p class="hint" id="design-hint">選一種顏色，點格子或拖曳上色。星星是系統給的。</p>
+          <div class="toolbar-actions">
+            <button class="ghost-btn" id="design-regen" type="button">重新生成</button>
+            <button class="solid-btn" id="design-submit" type="button">送交</button>
+            <button class="ghost-btn" id="design-restart" type="button">重新設計</button>
+          </div>
+        </footer>
+      </section>
     </div>
+
+    <p class="design-score" id="design-score" hidden></p>
 
     <div class="overlay" id="rules-overlay" hidden>
       <div class="dialog" role="dialog" aria-labelledby="rules-title" aria-modal="true">
@@ -135,7 +178,7 @@
     </div>
 
     <script src="reasoning.js?v=2"></script>
-    <script src="puzzle.js?v=34"></script>
-    <script src="game.js?v=32"></script>
+    <script src="puzzle.js?v=37"></script>
+    <script src="game.js?v=35"></script>
   </body>
 </html>

@@ -125,8 +125,8 @@ for (let lv = 675; lv <= 692; lv++) {
   assert(Puzzle.countSolutions(p.regions, 3) === 1, "675-692 必須唯一解: " + lv);
 }
 
-assert(Puzzle.testLevelCount() === 4, "目前應有 4 題測試關");
-assert(Puzzle.isTestLevel(1001) && Puzzle.isTestLevel(1004) && !Puzzle.isTestLevel(999) && !Puzzle.isTestLevel(1005), "測試關編號在征途之外");
+assert(Puzzle.testLevelCount() === 5, "目前應有 5 題測試關");
+assert(Puzzle.isTestLevel(1001) && Puzzle.isTestLevel(1005) && !Puzzle.isTestLevel(999) && !Puzzle.isTestLevel(1006), "測試關編號在征途之外");
 assert(Puzzle.CHAPTERS.length === 6 && Puzzle.CHAPTERS.every(function (ch) { return !ch.test; }), "測試關不屬於征途章節");
 const seenTestShapes = {};
 for (let lv = 1001; lv <= 1000 + Puzzle.testLevelCount(); lv++) {
