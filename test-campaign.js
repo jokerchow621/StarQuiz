@@ -137,7 +137,8 @@ for (let lv = 1001; lv <= 1000 + Puzzle.testLevelCount(); lv++) {
   assert(Puzzle.starsAreLegal(testPuzzle.stars), "測試關星星不合法: " + lv);
   assert(Puzzle.countSolutions(testPuzzle.regions, 2) === 1, "測試關必須唯一解: " + lv);
   const testShape = Puzzle.compactShapeKey(Puzzle.canonicalShapeKey(testPuzzle.regions));
-  assert(Puzzle.SHAPE_BANK_COMPACT.indexOf(testShape) < 0, "測試關不應混入征途形狀庫: " + lv);
+  const inCampaign = Puzzle.SHAPE_BANK_COMPACT.indexOf(testShape) >= 0;
+  assert(inCampaign === (lv === 1005), "只有測試第 5 題同時在征途裡: " + lv);
   assert(!seenTestShapes[testShape], "測試關形狀重複: " + lv);
   seenTestShapes[testShape] = lv;
   console.log("test level", lv, testPuzzle.n + "x" + testPuzzle.n, testPuzzle.difficulty, "depth", testPuzzle.rating.assumptionDepth);

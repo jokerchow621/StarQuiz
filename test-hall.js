@@ -77,7 +77,7 @@ function openingOracle(regions, useMatching = true) {
 }
 
 function verifyOpening(regions, expectedSolution, label) {
-  const expected = openingOracle(regions);
+  const expected = openingOracle(regions, false);
   const opening = Reasoning.analyze(regions, { maxDepth: 0 });
   if (expected === null) {
     assert.equal(opening.contradiction, true, label + ": missed contradiction");
@@ -159,16 +159,16 @@ function run() {
   verifySeededSoundness();
 
   const fixtures = [
-    ["9x9-harder-a.json", 0],
-    ["9x9-harder-b.json", 1],
-    ["9x9-candidate.json", 1],
+    ["9x9-harder-a.json", 2],
+    ["9x9-harder-b.json", 2],
+    ["9x9-candidate.json", 2],
   ];
   for (const [file, depth] of fixtures) {
     const fixture = require("./experimental/" + file);
     const opening = verifyOpening(fixture.regions, fixture.solution, file);
     const ordinary = openingOracle(fixture.regions, false);
     const ordinaryCount = ordinary.reduce((sum, row) => sum + row.length, 0);
-    assert.ok(opening.layers[0].candidates < ordinaryCount, file + ": Hall deductions must add real eliminations");
+    assert.equal(opening.layers[0].candidates, ordinaryCount, file + ": group counting must stay out of depth zero");
     const proof = Reasoning.analyze(fixture.regions);
     assert.equal(proof.complete, true, file);
     assert.equal(proof.assumptionDepth, depth, file + ": corrected nested depth");

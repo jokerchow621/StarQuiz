@@ -1,8 +1,8 @@
 {
-  "status": "imported-as-level-974",
+  "status": "imported-as-level-999",
   "targetDepth": 3,
-  "verifiedDepth": 0,
-  "model": "star-group-support-hall-failed-literal-v2",
+  "verifiedDepth": 2,
+  "model": "star-group-support-failed-literal-v3",
   "shape": "000000111/223340015/223344115/223344415/666677445/677775555/666677855/667667885/667777888",
   "regions": [
     [
@@ -116,9 +116,9 @@
     2,
     8
   ],
-  "score": 13,
-  "rawScore": 11,
-  "orderScore": 10.612337682235713,
+  "score": 100,
+  "rawScore": 65,
+  "orderScore": 64.90164740869292,
   "comparison": {
     "model": "star-group-support-hall-failed-literal-v2",
     "level": 998,
@@ -128,25 +128,37 @@
     "depth": 1
   },
   "certificate": {
-    "model": "star-group-support-hall-failed-literal-v2",
+    "model": "star-group-support-failed-literal-v3",
     "complete": true,
-    "assumptionDepth": 0,
+    "assumptionDepth": 2,
     "layers": [
       {
         "depth": 0,
+        "remaining": 9,
+        "candidates": 80,
+        "probes": 0
+      },
+      {
+        "depth": 1,
+        "remaining": 9,
+        "candidates": 78,
+        "probes": 158
+      },
+      {
+        "depth": 2,
         "remaining": 0,
         "candidates": 9,
-        "probes": 0
+        "probes": 4238
       }
     ],
     "opening": {
-      "candidates": 9,
-      "remaining": 0,
-      "forced": 9,
-      "eliminated": 72,
-      "rounds": 4,
-      "supportEliminations": 18,
-      "hallEliminations": 54
+      "candidates": 80,
+      "remaining": 9,
+      "forced": 0,
+      "eliminated": 1,
+      "rounds": 2,
+      "supportEliminations": 1,
+      "hallEliminations": 0
     },
     "solution": [
       4,
@@ -159,8 +171,8 @@
       2,
       8
     ],
-    "lowerBound": 0,
-    "nodes": 1,
+    "lowerBound": 2,
+    "nodes": 4399,
     "domains": [
       [
         4
@@ -191,8 +203,135 @@
       ]
     ]
   },
-  "shallowerCertificate": null,
-  "campaignLevel": 974,
+  "shallowerCertificate": {
+    "model": "star-group-support-failed-literal-v3",
+    "complete": false,
+    "assumptionDepth": null,
+    "layers": [
+      {
+        "depth": 0,
+        "remaining": 9,
+        "candidates": 80,
+        "probes": 0
+      },
+      {
+        "depth": 1,
+        "remaining": 9,
+        "candidates": 78,
+        "probes": 158
+      }
+    ],
+    "opening": {
+      "candidates": 80,
+      "remaining": 9,
+      "forced": 0,
+      "eliminated": 1,
+      "rounds": 2,
+      "supportEliminations": 1,
+      "hallEliminations": 0
+    },
+    "lowerBound": 2,
+    "nodes": 160,
+    "domains": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    ]
+  },
+  "campaignLevel": 999,
   "previousAnalysis": {
     "status": "imported-as-level-999",
     "verifiedDepth": 2,

@@ -1,8 +1,8 @@
 {
   "status": "imported-as-level-998",
   "targetDepth": 3,
-  "verifiedDepth": 1,
-  "model": "star-group-support-hall-failed-literal-v2",
+  "verifiedDepth": 2,
+  "model": "star-group-support-failed-literal-v3",
   "shape": "000001112/300001122/330004422/300335442/303335544/333665554/777655884/776658888/766666668",
   "regions": [
     [
@@ -117,31 +117,37 @@
     8
   ],
   "certificate": {
-    "model": "star-group-support-hall-failed-literal-v2",
+    "model": "star-group-support-failed-literal-v3",
     "complete": true,
-    "assumptionDepth": 1,
+    "assumptionDepth": 2,
     "layers": [
       {
         "depth": 0,
-        "remaining": 7,
-        "candidates": 33,
+        "remaining": 9,
+        "candidates": 81,
         "probes": 0
       },
       {
         "depth": 1,
+        "remaining": 9,
+        "candidates": 76,
+        "probes": 235
+      },
+      {
+        "depth": 2,
         "remaining": 0,
         "candidates": 9,
-        "probes": 31
+        "probes": 3760
       }
     ],
     "opening": {
-      "candidates": 33,
-      "remaining": 7,
-      "forced": 2,
-      "eliminated": 48,
-      "rounds": 4,
-      "supportEliminations": 10,
-      "hallEliminations": 38
+      "candidates": 81,
+      "remaining": 9,
+      "forced": 0,
+      "eliminated": 0,
+      "rounds": 1,
+      "supportEliminations": 0,
+      "hallEliminations": 0
     },
     "solution": [
       5,
@@ -154,8 +160,8 @@
       4,
       8
     ],
-    "lowerBound": 1,
-    "nodes": 33,
+    "lowerBound": 2,
+    "nodes": 3998,
     "domains": [
       [
         5
@@ -187,31 +193,40 @@
     ]
   },
   "shallowerCertificate": {
-    "model": "star-group-support-hall-failed-literal-v2",
+    "model": "star-group-support-failed-literal-v3",
     "complete": false,
     "assumptionDepth": null,
     "layers": [
       {
         "depth": 0,
-        "remaining": 7,
-        "candidates": 33,
+        "remaining": 9,
+        "candidates": 81,
         "probes": 0
+      },
+      {
+        "depth": 1,
+        "remaining": 9,
+        "candidates": 76,
+        "probes": 235
       }
     ],
     "opening": {
-      "candidates": 33,
-      "remaining": 7,
-      "forced": 2,
-      "eliminated": 48,
-      "rounds": 4,
-      "supportEliminations": 10,
-      "hallEliminations": 38
+      "candidates": 81,
+      "remaining": 9,
+      "forced": 0,
+      "eliminated": 0,
+      "rounds": 1,
+      "supportEliminations": 0,
+      "hallEliminations": 0
     },
-    "lowerBound": 1,
-    "nodes": 1,
+    "lowerBound": 2,
+    "nodes": 237,
     "domains": [
       [
+        0,
+        1,
         2,
+        3,
         5,
         6,
         7,
@@ -219,7 +234,10 @@
       ],
       [
         0,
+        1,
         2,
+        3,
+        4,
         5,
         7,
         8
@@ -228,6 +246,8 @@
         0,
         1,
         2,
+        3,
+        4,
         5,
         6,
         7,
@@ -235,30 +255,65 @@
       ],
       [
         0,
+        1,
         2,
+        3,
+        4,
+        5,
         6,
         7,
         8
       ],
       [
         0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
         7,
         8
       ],
       [
-        3
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
       ],
       [
         0,
         1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
         6,
         7
       ],
       [
-        4
-      ],
-      [
         0,
+        1,
+        2,
+        3,
+        4,
+        7,
         8
       ]
     ]
@@ -329,9 +384,9 @@
     },
     "campaignLevel": 997
   },
-  "score": 97,
-  "rawScore": 38,
-  "orderScore": 37.69093050363986,
+  "score": 100,
+  "rawScore": 65,
+  "orderScore": 64.85961005765306,
   "calibration": {
     "model": "star-group-support-hall-failed-literal-v2",
     "minOrder": 6.553634167291669,

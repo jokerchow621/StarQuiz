@@ -7,13 +7,13 @@
 
   // Depth is relative to these explicit rules, not to a particular player's
   // strategy. At depth zero: row/column/region singles and pairwise support
-  // (same column, same region, adjacent stars), plus Hall group exclusions,
-  // are propagated to a fixed point. k regions confined to k rows/columns
-  // occupy those groups completely; the same rule applies in every direction.
+  // (same column, same region, adjacent stars) are propagated to a fixed
+  // point. Group-counting exclusions are not used: several rows locking the
+  // same number of colors is hard to see, so it does not count as depth zero.
   // At depth k, a candidate is removed only if assuming it produces a
   // contradiction after closing all deductions available at depth k - 1.
   // Repeating depth-one deductions is still depth one, however long the chain.
-  var MODEL = "star-group-support-hall-failed-literal-v2";
+  var MODEL = "star-group-support-failed-literal-v3";
 
   function copy(domains) {
     return domains.map(function (row) { return row.slice(); });
@@ -45,11 +45,7 @@
         });
       });
     });
-    var sizes = Array(1 << n).fill(0);
-    for (var mask = 1; mask < sizes.length; mask++) {
-      sizes[mask] = sizes[mask & (mask - 1)] + 1;
-    }
-    return { groups: groups, support: support, families: families, sizes: sizes };
+    return { groups: groups, support: support, families: families };
   }
 
   function propagate(domains, graph, stats) {
@@ -79,38 +75,6 @@
       if (graph.groups.some(function (group) {
         return !group.some(function (cell) { return active[cell]; });
       })) return null;
-      // Hall's counting rule: k source groups whose candidates touch only k
-      // target groups must occupy all of them. Batch each pair's removals so
-      // evaluating a subset cannot invent support from an already removed cell.
-      for (var from = 0; from < 3; from++) {
-        for (var to = 0; to < 3; to++) {
-          if (from === to) continue;
-          var edges = Array(n).fill(0);
-          for (var x = 0; x < active.length; x++) {
-            if (active[x]) edges[graph.families[from][x]] |= 1 << graph.families[to][x];
-          }
-          var union = Array(1 << n).fill(0);
-          var forbidden = Array(n).fill(0);
-          for (var subset = 1; subset < union.length; subset++) {
-            var bit = subset & -subset;
-            var index = 31 - Math.clz32(bit);
-            var targets = union[subset ^ bit] | edges[index];
-            union[subset] = targets;
-            if (graph.sizes[targets] < graph.sizes[subset]) return null;
-            if (graph.sizes[targets] !== graph.sizes[subset]) continue;
-            for (var id = 0; id < n; id++) {
-              if (!(subset & (1 << id))) forbidden[id] |= targets;
-            }
-          }
-          for (var y = 0; y < active.length; y++) {
-            if (active[y] && (forbidden[graph.families[from][y]] & (1 << graph.families[to][y]))) {
-              active[y] = false;
-              stats.hallEliminations++;
-              changed = true;
-            }
-          }
-        }
-      }
     }
     return domains.map(function (row, r) {
       return row.filter(function (c) { return active[r * n + c]; });

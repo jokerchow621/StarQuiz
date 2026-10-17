@@ -17,24 +17,21 @@ function verifySolution(board, proof) {
 const first = Puzzle.generateLevel(1);
 assert.equal(Reasoning.analyze(first.regions).assumptionDepth, 0);
 const last = Puzzle.generateLevel(999);
-const shallow = Reasoning.analyze(last.regions, { maxDepth: 0 });
-assert.equal(shallow.complete, false, "The final board must resist ALL deterministic Hall deductions");
+const shallow = Reasoning.analyze(last.regions, { maxDepth: 1 });
+assert.equal(shallow.complete, false, "The final board must resist one assumption layer");
 assert.equal(shallow.assumptionDepth, null);
-assert.equal(shallow.lowerBound, 1);
+assert.equal(shallow.lowerBound, 2);
 assert.ok(shallow.layers[0].remaining > 0);
 const solved = Reasoning.analyze(last.regions);
 verifySolution(last.regions, solved);
-assert.equal(solved.assumptionDepth, 1);
+assert.equal(solved.assumptionDepth, 2);
 
-// Use an immutable board independently known to need one assumption: a board
-// solved by depth-zero Hall deductions should succeed even with one node.
-const oneLayerFixture = require("./experimental/9x9-harder-b.json");
-const deterministicFixture = require("./experimental/9x9-harder-a.json");
-const deterministic = Reasoning.analyze(deterministicFixture.regions, { maxNodes: 1 });
-verifySolution(deterministicFixture.regions, deterministic);
+// A depth-zero board closes without searching, so one node is enough.
+const deterministic = Reasoning.analyze(Puzzle.generateLevel(1).regions, { maxNodes: 1 });
+verifySolution(Puzzle.generateLevel(1).regions, deterministic);
 assert.equal(deterministic.assumptionDepth, 0);
 assert.equal(deterministic.limitReached, undefined);
-const limited = Reasoning.analyze(oneLayerFixture.regions, { maxNodes: 1 });
+const limited = Reasoning.analyze(last.regions, { maxNodes: 1 });
 assert.equal(limited.complete, false);
 assert.equal(limited.limitReached, true);
 assert.equal(limited.assumptionDepth, null, "A resource limit is not a depth certificate");
@@ -62,18 +59,17 @@ for (const fixture of [last, Puzzle.generateLevel(820)]) {
   }
 }
 
-// This audited histogram records the stronger model's actual certificates.
-// Previously labelled two-layer boards must not keep that label after Hall
-// exclusions reduce their true required depth to zero or one.
+// Depths after removing group-counting exclusions. Within each size, boards
+// are ordered by depth and then by precise score.
 const expectedHistogram = {
   4: { 0: 5 },
-  5: { 0: 237, 1: 8 },
-  6: { 0: 192, 1: 8 },
-  7: { 0: 191, 1: 9 },
-  8: { 0: 168, 1: 2 },
-  9: { 0: 167, 1: 12 },
+  5: { 0: 225, 1: 20 },
+  6: { 0: 180, 1: 20 },
+  7: { 0: 180, 1: 20 },
+  8: { 0: 136, 1: 24, 2: 10 },
+  9: { 0: 135, 1: 21, 2: 23 },
 };
-assert.equal(Reasoning.MODEL, "star-group-support-hall-failed-literal-v2");
+assert.equal(Reasoning.MODEL, "star-group-support-failed-literal-v3");
 let checked = 0;
 for (const chapter of Puzzle.CHAPTERS) {
   let previous = null;

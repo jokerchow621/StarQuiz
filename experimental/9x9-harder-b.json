@@ -1,8 +1,8 @@
 {
-  "status": "imported-as-level-995",
+  "status": "imported-as-level-997",
   "targetDepth": 3,
-  "verifiedDepth": 1,
-  "model": "star-group-support-hall-failed-literal-v2",
+  "verifiedDepth": 2,
+  "model": "star-group-support-failed-literal-v3",
   "shape": "000000001/220031111/422033311/444003335/444443355/466645555/466447777/664468877/666668887",
   "regions": [
     [
@@ -116,9 +116,9 @@
     7,
     5
   ],
-  "score": 94,
-  "rawScore": 37,
-  "orderScore": 36.82786799687321,
+  "score": 100,
+  "rawScore": 65,
+  "orderScore": 64.7830801230949,
   "comparison": {
     "model": "star-group-support-hall-failed-literal-v2",
     "level": 998,
@@ -128,31 +128,37 @@
     "depth": 1
   },
   "certificate": {
-    "model": "star-group-support-hall-failed-literal-v2",
+    "model": "star-group-support-failed-literal-v3",
     "complete": true,
-    "assumptionDepth": 1,
+    "assumptionDepth": 2,
     "layers": [
       {
         "depth": 0,
-        "remaining": 5,
-        "candidates": 24,
+        "remaining": 9,
+        "candidates": 79,
         "probes": 0
       },
       {
         "depth": 1,
+        "remaining": 9,
+        "candidates": 77,
+        "probes": 156
+      },
+      {
+        "depth": 2,
         "remaining": 0,
         "candidates": 9,
-        "probes": 20
+        "probes": 3957
       }
     ],
     "opening": {
-      "candidates": 24,
-      "remaining": 5,
-      "forced": 4,
-      "eliminated": 57,
-      "rounds": 3,
-      "supportEliminations": 12,
-      "hallEliminations": 45
+      "candidates": 79,
+      "remaining": 9,
+      "forced": 0,
+      "eliminated": 2,
+      "rounds": 2,
+      "supportEliminations": 2,
+      "hallEliminations": 0
     },
     "solution": [
       8,
@@ -165,8 +171,8 @@
       7,
       5
     ],
-    "lowerBound": 1,
-    "nodes": 22,
+    "lowerBound": 2,
+    "nodes": 4116,
     "domains": [
       [
         8
@@ -198,74 +204,133 @@
     ]
   },
   "shallowerCertificate": {
-    "model": "star-group-support-hall-failed-literal-v2",
+    "model": "star-group-support-failed-literal-v3",
     "complete": false,
     "assumptionDepth": null,
     "layers": [
       {
         "depth": 0,
-        "remaining": 5,
-        "candidates": 24,
+        "remaining": 9,
+        "candidates": 79,
         "probes": 0
+      },
+      {
+        "depth": 1,
+        "remaining": 9,
+        "candidates": 77,
+        "probes": 156
       }
     ],
     "opening": {
-      "candidates": 24,
-      "remaining": 5,
-      "forced": 4,
-      "eliminated": 57,
-      "rounds": 3,
-      "supportEliminations": 12,
-      "hallEliminations": 45
+      "candidates": 79,
+      "remaining": 9,
+      "forced": 0,
+      "eliminated": 2,
+      "rounds": 2,
+      "supportEliminations": 2,
+      "hallEliminations": 0
     },
-    "lowerBound": 1,
-    "nodes": 1,
+    "lowerBound": 2,
+    "nodes": 158,
     "domains": [
       [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
         8
       ],
       [
-        4
-      ],
-      [
-        1
-      ],
-      [
-        3
-      ],
-      [
         0,
-        7
-      ],
-      [
-        0,
-        2,
+        1,
+        3,
+        4,
         5,
         6,
-        7
+        7,
+        8
+      ],
+      [
+        1,
+        2,
+        3,
+        6,
+        7,
+        8
       ],
       [
         0,
+        1,
         2,
+        3,
+        4,
         5,
         6,
-        7
-      ],
-      [
-        2,
-        5,
-        7
+        7,
+        8
       ],
       [
         0,
+        1,
         2,
+        3,
+        4,
         5,
         6,
-        7
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
       ]
     ]
   },
-  "campaignLevel": 995,
+  "campaignLevel": 997,
   "previousAnalysis": {
     "status": "imported-as-level-998",
     "verifiedDepth": 2,
